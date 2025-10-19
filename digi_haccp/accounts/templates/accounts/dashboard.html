@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+  <h2>Welcome, {{ request.user.email }}!</h2>
+  <p>Your role: {{ request.user.role }}</p>
+  <p>Deli ID: {{ request.user.deli_id }}</p>
+  <a href="/logout/">Logout</a>
+</body>
+</html>
