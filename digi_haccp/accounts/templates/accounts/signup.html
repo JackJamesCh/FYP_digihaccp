@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account | Digi HACCP</title>
+  <style>
+    /* This is an overall layout which is centered on the screen with a light background for clarity and to be cohesive with the other web pages */
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    /* This just a simple white card holds the signup form to make it stand out from the background */
+    .card {
+      background: #fff;
+      width: 100%;
+      max-width: 460px;
+      padding: 36px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, .1);
+    }
+
+    /* The page heading */
+    h2 {
+      margin: 0 0 18px;
+      text-align: center;
+      color: #333;
+    }
+
+    /* making sure each form field section has consistent spacing */
+    .row {
+      margin-bottom: 16px;
+    }
+
+    /*  The Labels are styled clearly to help users know what to fill in */
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    /* I made sure Inputs and dropdowns share the same style for consistency */
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    /* Highlight input fields when users click or type in them */
+    input:focus, select:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 4px rgba(0, 123, 255, .3);
+    }
+
+    /* Space above the submit button */
+    .actions {
+      margin-top: 18px;
+    }
+
+    /* The main button uses Digi HACCP’s blue color scheme */
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #007bff;
+      color: #fff;
+    }
+
+    /* Slight color change when hovering for better user experience */
+    button:hover {
+      background: #005ec4;
+    }
+
+    /* Helpful text under the form */
+    .help {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* Django automatically shows validation errors under each field */
+    .errorlist {
+      color: #d9534f;
+      margin: 6px 0 0;
+      padding-left: 18px;
+    }
+
+    /* Any general Django messages (like success or error alerts) appear here */
+    .messages {
+      text-align: center;
+      margin-top: 10px;
+      color: #d9534f;
+    }
+
+    /* I made sure thatLinks keep the same blue tone for a consistent look */
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- The card acts as the main signup box -->
+  <div class="card">
+    <h2>Create your account</h2>
+
+    <!-- This form collects all user signup details -->
+    <form method="POST" novalidate>
+      {% csrf_token %}
+      <!-- The CSRF token protects the form against security attacks -->
+
+      <!-- Each of the following rows displays a field from the Django signup form -->
+      <div class="row">
+        <label for="id_email">Email</label>
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+
+      <div class="row">
+        <label for="id_role">Role</label>
+        {{ form.role }}
+        {{ form.role.errors }}
+      </div>
+
+      <div class="row">
+        <label for="id_deli_id">Deli ID (optional)</label>
+        {{ form.deli_id }}
+        {{ form.deli_id.errors }}
+      </div>
+
+      <div class="row">
+        <label for="id_password">Password</label>
+        {{ form.password }}
+        {{ form.password.errors }}
+      </div>
+
+      <div class="row">
+        <label for="id_password_confirm">Confirm password</label>
+        {{ form.password_confirm }}
+        {{ form.password_confirm.errors }}
+      </div>
+
+      <!-- The submit button creates the user account -->
+      <div class="actions">
+        <button type="submit">Create Account</button>
+      </div>
+    </form>
+
+    <!-- If there are any messages from the backend (like success or error), they show here -->
+    <div class="messages">
+      {% for message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    </div>
+
+    <!-- A link for users who already have an account -->
+    <p class="help">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+  </div>
+
+</body>
+</html>

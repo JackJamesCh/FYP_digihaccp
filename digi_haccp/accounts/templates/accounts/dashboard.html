@@ -1,12 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | Digi HACCP</title>
+
+  <style>
+    /* A clean and simple base style for the page */
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* I created a blue navigation bar for the time being and easy logout access */
+    .navbar {
+      background-color: #007bff;
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Styled the logout button to make it easy to see and interactive */
+    .logout-btn {
+      background-color: white;
+      color: #007bff;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .logout-btn:hover {
+      background-color: #e9ecef;
+    }
+
+    /* I used a centered card-style container for the dashboard content. This styling is used on one of my past projects */
+    .dashboard-container {
+      max-width: 800px;
+      margin: 60px auto;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .user-info {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    /* I added badges to visually show user roles (manager or staff) */
+    .role-badge {
+      display: inline-block;
+      background-color: #28a745;
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    /* Different badge colour for staff users */
+    .role-badge.staff {
+      background-color: #17a2b8;
+    }
+
+    /* I included a simple footer for the time being might change in the future */
+    footer {
+      text-align: center;
+      color: #777;
+      font-size: 13px;
+      margin-top: 60px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Welcome, {{ request.user.email }}!</h2>
-  <p>Your role: {{ request.user.role }}</p>
-  <p>Deli ID: {{ request.user.deli_id }}</p>
-  <a href="/logout/">Logout</a>
+
+  <!-- I created a navigation bar with the web name and logout option -->
+  <div class="navbar">
+    <h1>Digi HACCP Dashboard</h1>
+    <form action="/logout/" method="get" style="margin:0;">
+      <button class="logout-btn" type="submit">Logout</button>
+    </form>
+  </div>
+
+  <!-- I designed a simple dashboard section to greet the user and show their basic info -->
+  <div class="dashboard-container">
+    <!-- I display the logged-in user's email dynamically using Django template tags. I got the waving hand emoji from https://symbl.cc/ -->
+    <h2>Welcome, {{ request.user.email }} 👋</h2>
+
+    <div class="user-info">
+      <!-- I show the user's role with a colored badge -->
+      <p>Your Role:
+        <span class="role-badge {% if request.user.role == 'staff' %}staff{% endif %}">
+          {{ request.user.role }}
+        </span>
+      </p>
+
+      <!-- Display the user's Deli ID -->
+      <p>Deli ID: <strong>{{ request.user.deli_id }}</strong></p>
+    </div>
+
+    <!-- For now, I added a short instruction for what users can do next -->
+    <p>Use the navigation above to get started with your HACCP management tasks.</p>
+  </div>
+
+  <!-- I added a footer for a professional look changes will be made in the future -->
+  <footer>
+    <p>&copy; 2025 Digi HACCP | All rights reserved</p>
+  </footer>
+
 </body>
 </html>

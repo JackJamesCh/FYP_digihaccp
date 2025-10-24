@@ -1,20 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Digi HACCP</title>
+
+  <style>
+    /* I set a clean and simple style for the entire login page */
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    /* I used a centered white container to hold the login form. This is from one of my past projects that I have done. */
+    .login-container {
+      background-color: #fff;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* I styled the heading to welcome the users */
+    h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    /* I formatted labels for better readability and spacing */
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #444;
+      font-weight: 500;
+    }
+
+    /* Styled the input fields for email and password */
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: 0.3s;
+    }
+
+    /* I added a focus effect to highlight active input fields. Referenced from - https://developer.mozilla.org/en-US/docs/Web/CSS/:focus */
+    input:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 4px rgba(0,123,255,0.3);
+    }
+
+    /* I styled the login button for a clear call-to-action */
+    button {
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    /* I added a hover effect for better interactivity also user can tell that this is a button that they could click into */
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Styled login error or success messages shown by Django */
+    .message {
+      text-align: center;
+      color: #d9534f;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    /* I included footer text for help and account creation links */
+    .footer-text {
+      text-align: center;
+      color: #777;
+      margin-top: 25px;
+      font-size: 13px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Login</h2>
-  <form method="POST">
-    {% csrf_token %}
-    <label>Email:</label><br>
-    <input type="email" name="email" required><br>
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
-    <button type="submit">Login</button>
-  </form>
-  {% for message in messages %}
-    <p>{{ message }}</p>
-  {% endfor %}
+
+  <!-- I created a container to hold the login form -->
+  <div class="login-container">
+    <h2>Welcome to Digi HACCP</h2>
+
+    <!-- I used a POST form for login so user credentials are sent securely -->
+    <form method="POST">
+      {% csrf_token %}
+      <!-- added CSRF protection to prevent cross-site request attacks. Referenced from - https://docs.djangoproject.com/en/5.2/howto/csrf/ -->
+
+      <!-- I added an email input field -->
+      <label for="email">Email</label>
+      <input id="email" type="email" name="email" placeholder="Enter your email" required>
+
+      <!-- added a password input field -->
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" placeholder="Enter your password" required>
+
+      <!-- added a login button to submit the form -->
+      <button type="submit">Log In</button>
+    </form>
+
+    <!-- I display Django messages (like 'Invalid credentials') here -->
+    {% for message in messages %}
+      <p class="message">{{ message }}</p>
+    {% endfor %}
+
+    <!-- I added helpful footer and signup option text for users -->
+    <p class="footer-text">Having trouble logging in? Contact your manager for help.</p>
+    <p class="footer-text">No account? <a href="{% url 'signup' %}">Create one</a>.</p>
+  </div>
+
 </body>
 </html>
