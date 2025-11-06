@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Delis | Digi HACCP</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+</head>
+
+<body class="bg-gradient-to-br from-green-200 to-green-400 min-h-screen">
+  <header class="w-full py-5 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-3xl shadow-md border-b border-white/30 tracking-wide">
+    Digi HACCP – Manage Delis
+  </header>
+
+  <main class="flex flex-col items-center justify-center p-6">
+    <div class="card bg-base-100 shadow-2xl w-full max-w-5xl">
+      <div class="card-body">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-primary">Delis</h2>
+          <a href="{% url 'new_deli' %}" class="btn btn-success">+ Add Deli</a>
+        </div>
+
+        {% if messages %}
+        <div class="mb-4">
+          {% for message in messages %}
+          <div class="alert alert-info">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr class="bg-base-200">
+                <th>ID</th>
+                <th>Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for deli in delis %}
+              <tr>
+                <td>{{ deli.deli_ID }}</td>
+                <td>{{ deli.deli_name }}</td>
+                <td>{{ deli.address }}</td>
+                <td>{{ deli.phone_number }}</td>
+                <td>
+                  <a href="{% url 'edit_deli' deli.deli_ID %}" class="btn btn-primary btn-sm">Edit</a>
+                  <a href="{% url 'delete_deli' deli.deli_ID %}" class="btn btn-error btn-sm" onclick="return confirm('Delete this deli?');">Delete</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-gray-500 py-6">No delis found.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-6">
+          <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">Back to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

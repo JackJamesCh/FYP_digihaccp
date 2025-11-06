@@ -53,7 +53,7 @@
           <div class="stat bg-base-200 rounded-xl">
             <div class="stat-title">Deli ID</div>
             <div class="stat-value text-primary">
-              {{ request.user.deli_id|default:"N/A" }}
+              {{ request.user.delis.all|join:", "|default:"N/A" }}
             </div>
             <div class="stat-desc">Linked location for this manager</div>
           </div>
@@ -73,6 +73,9 @@
           </a>
           <a href="{% url 'dashboard' %}" class="btn btn-outline btn-success w-full sm:w-auto">
             View staff dashboard
+          </a>
+          <a href="{% url 'manage_delis' %}" class="btn btn-primary w-full sm:w-auto">
+            Manage Delis
           </a>
           <a href="{% url 'logout' %}" class="btn btn-error w-full sm:w-auto">
             Log out

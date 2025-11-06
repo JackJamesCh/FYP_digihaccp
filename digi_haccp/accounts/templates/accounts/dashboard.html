@@ -120,7 +120,7 @@
       </p>
 
       <!-- Display the user's Deli ID -->
-      <p>Deli ID: <strong>{{ request.user.deli_id }}</strong></p>
+      <p>Deli ID: <strong>{{ request.user.delis.all|join:", " }}</strong></p>
     </div>
 
     <!-- For now, I added a short instruction for what users can do next -->

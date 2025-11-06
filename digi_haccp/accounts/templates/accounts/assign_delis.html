@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assign Delis | Digi HACCP</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+</head>
+
+<body class="bg-gradient-to-br from-green-200 to-green-400 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="w-full py-5 text-white text-center font-extrabold text-3xl shadow-md border-b border-white/30">
+    Digi HACCP – Assign Delis
+  </header>
+
+  <main class="flex-grow flex justify-center items-center p-6">
+    <div class="card bg-base-100 shadow-2xl w-full max-w-lg">
+      <div class="card-body">
+        <h2 class="text-2xl font-bold text-primary mb-4">Assign Delis to {{ user.email }}</h2>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="space-y-2">
+            {{ form.as_p }}
+          </div>
+
+          <div class="mt-4 flex flex-col sm:flex-row gap-3">
+            <button type="submit" class="btn btn-success w-full sm:w-auto">Save Assignments</button>
+            <a href="{% url 'manage_users' %}" class="btn btn-outline btn-success w-full sm:w-auto">Back</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

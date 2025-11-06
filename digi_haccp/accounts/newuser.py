@@ -1,10 +1,13 @@
 from django import forms
-from .models import User
+from .models import User   # we don't need Deli directly here unless you want to customise the widget
 
 # This form handles the creation of new user accounts in my system
 class SignUpForm(forms.ModelForm):
-    # Custom password fields so I can collect and confirm passwords securely Referenced from - https://stackoverflow.com/questions/34609830/django-modelform-how-to-add-a-confirm-password-field
-    password = forms.CharField(widget=forms.PasswordInput(attrs={"placeholder": "Create a password"}))
+    # Custom password fields so I can collect and confirm passwords securely
+    # Referenced from - https://stackoverflow.com/questions/34609830/django-modelform-how-to-add-a-confirm-password-field
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={"placeholder": "Create a password"})
+    )
     password_confirm = forms.CharField(
         label="Confirm password",
         widget=forms.PasswordInput(attrs={"placeholder": "Re-enter your password"})
@@ -13,12 +16,14 @@ class SignUpForm(forms.ModelForm):
     # The Meta class tells Django which model this form is linked to
     class Meta:
         model = User  # connects the form to my custom User model
-        fields = ["email", "role", "deli_id"]  # these fields come from the User model
+        # ✅ use "delis" (ManyToManyField), no more "deli_id"
+        fields = ["email", "role", "delis"]  # these fields come from the User model
         widgets = {
             "email": forms.EmailInput(attrs={"placeholder": "you@example.com"}),  # adds a placeholder for the email box
         }
 
-    # This function checks if the email is already registered. Referenced from - https://stackoverflow.com/questions/36420733/form-validation-in-django-for-checking-unique-emails
+    # This function checks if the email is already registered.
+    # Referenced from - https://stackoverflow.com/questions/36420733/form-validation-in-django-for-checking-unique-emails
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email=email).exists():
@@ -41,6 +46,11 @@ class SignUpForm(forms.ModelForm):
             email=self.cleaned_data["email"],
             password=self.cleaned_data["password"],
             role=self.cleaned_data.get("role") or "staff",  # assigns 'staff' by default if no role selected
-            deli_id=self.cleaned_data.get("deli_id"),
         )
+
+        # ✅ Handle the many-to-many delis relation
+        delis = self.cleaned_data.get("delis")
+        if delis:
+            user.delis.set(delis)
+
         return user

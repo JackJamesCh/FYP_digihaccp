@@ -4,6 +4,8 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
+from .forms import DeliForm, AssignDeliForm
+from .models import Deli
 
 
 # ----------------------------
@@ -131,3 +133,63 @@ def delete_user_view(request, user_id):
     except User.DoesNotExist:
         messages.error(request, "User not found.")
     return redirect('manage_users')
+
+
+# ✅ List all delis
+@user_passes_test(is_manager, login_url='dashboard')
+def manage_delis_view(request):
+    delis = Deli.objects.all().order_by('deli_name')
+    return render(request, 'accounts/manage_delis.html', {'delis': delis})
+
+
+# ✅ Create or edit a deli
+@user_passes_test(is_manager, login_url='dashboard')
+def deli_form_view(request, deli_id=None):
+    if deli_id:
+        deli = Deli.objects.get(pk=deli_id)
+        form = DeliForm(instance=deli)
+        title = "Edit Deli"
+    else:
+        deli = None
+        form = DeliForm()
+        title = "Add New Deli"
+
+    if request.method == "POST":
+        form = DeliForm(request.POST, instance=deli)
+        if form.is_valid():
+            form.save()
+            if deli_id:
+                messages.success(request, "Deli updated successfully.")
+            else:
+                messages.success(request, "New deli created successfully.")
+            return redirect('manage_delis')
+
+    return render(request, 'accounts/deli_form.html', {'form': form, 'title': title})
+
+
+# ✅ Delete a deli
+@user_passes_test(is_manager, login_url='dashboard')
+def delete_deli_view(request, deli_id):
+    try:
+        deli = Deli.objects.get(pk=deli_id)
+        deli.delete()
+        messages.success(request, "Deli deleted successfully.")
+    except Deli.DoesNotExist:
+        messages.error(request, "Deli not found.")
+    return redirect('manage_delis')
+
+
+# ✅ View to assign a user to multiple delis
+@user_passes_test(is_manager, login_url='dashboard')
+def assign_delis_view(request, user_id):
+    user = User.objects.get(id=user_id)
+    if request.method == "POST":
+        form = AssignDeliForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{user.email} deli assignments updated successfully.")
+            return redirect('manage_users')
+    else:
+        form = AssignDeliForm(instance=user)
+
+    return render(request, 'accounts/assign_delis.html', {'form': form, 'user': user})

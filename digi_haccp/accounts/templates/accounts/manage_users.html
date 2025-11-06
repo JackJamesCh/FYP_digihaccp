@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manage Users | Digi HACCP</title>
 
+  <!-- DaisyUI -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
   <script>
     document.documentElement.setAttribute("data-theme", "pastel");
   </script>
 
+  <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -30,9 +32,12 @@
 
   <!-- Content -->
   <main class="flex-grow flex justify-center p-6">
-    <div class="card bg-base-100 shadow-2xl w-full max-w-5xl">
+    <div class="card bg-base-100 shadow-2xl w-full max-w-6xl">
       <div class="card-body">
-        <h2 class="text-2xl font-bold text-primary mb-4">User Management</h2>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-primary">User Management</h2>
+          <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">← Back to Dashboard</a>
+        </div>
 
         <!-- Django Messages -->
         {% if messages %}
@@ -43,41 +48,58 @@
         </div>
         {% endif %}
 
-        <!-- Table -->
+        <!-- User Table -->
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full">
             <thead>
-              <tr class="bg-base-200">
+              <tr class="bg-base-200 text-base font-semibold">
                 <th>Email</th>
                 <th>Role</th>
-                <th>Deli ID</th>
+                <th>Assigned Delis</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for user in users %}
               <tr>
-                <td>{{ user.email }}</td>
+                <td class="font-medium">{{ user.email }}</td>
                 <td>{{ user.role|title }}</td>
-                <td>{{ user.deli_id|default:"—" }}</td>
                 <td>
-                  {% if user.id != request.user.id %}
-                  <a href="{% url 'delete_user' user.id %}" class="btn btn-error btn-sm" onclick="return confirm('Delete {{ user.email }}?')">
-                    Delete
-                  </a>
+                  {% if user.delis.all %}
+                    {% for deli in user.delis.all %}
+                      <span class="badge badge-outline badge-success mr-1">{{ deli.deli_name }}</span>
+                    {% empty %}
+                      <span class="text-gray-400 italic">—</span>
+                    {% endfor %}
                   {% else %}
-                  <button class="btn btn-disabled btn-sm">You</button>
+                    <span class="text-gray-400 italic">—</span>
                   {% endif %}
                 </td>
+                <td>
+                  <div class="flex flex-wrap gap-2">
+                    <!-- Assign delis -->
+                    <a href="{% url 'assign_delis' user.id %}" class="btn btn-primary btn-sm">Assign Delis</a>
+
+                    <!-- Delete (hide self) -->
+                    {% if user.id != request.user.id %}
+                    <a href="{% url 'delete_user' user.id %}" 
+                       class="btn btn-error btn-sm"
+                       onclick="return confirm('Delete {{ user.email }}?')">
+                      Delete
+                    </a>
+                    {% else %}
+                    <button class="btn btn-disabled btn-sm">You</button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-gray-500 py-6">No users found.</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
-        </div>
-
-        <!-- Back button -->
-        <div class="mt-6">
-          <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">Back to Dashboard</a>
         </div>
 
       </div>
