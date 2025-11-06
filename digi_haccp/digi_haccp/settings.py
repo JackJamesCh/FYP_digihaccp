@@ -138,7 +138,13 @@ USE_TZ = True
 # STATIC FILES
 # -----------------------------
 # Tells Django where to look for static assets like CSS and images
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",  # This line tells Django to look in the /static folder you created
+]
+
 
 
 # -----------------------------

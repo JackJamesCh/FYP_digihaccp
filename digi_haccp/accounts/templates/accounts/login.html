@@ -1,133 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | Digi HACCP</title>
 
+  <!-- ✅ DaisyUI standalone (includes Tailwind) -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+
+  <!-- ✅ Set theme -->
+  <script>
+    document.documentElement.setAttribute("data-theme", "pastel");
+  </script>
+
+  <!-- ✅ Modern font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    /* I set a clean and simple style for the entire login page */
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f7fa;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
       margin: 0;
-    }
-
-    /* I used a centered white container to hold the login form. This is from one of my past projects that I have done. */
-    .login-container {
-      background-color: #fff;
-      padding: 40px 50px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-    }
-
-    /* I styled the heading to welcome the users */
-    h2 {
-      text-align: center;
-      color: #333;
-      margin-bottom: 25px;
-    }
-
-    /* I formatted labels for better readability and spacing */
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #444;
-      font-weight: 500;
-    }
-
-    /* Styled the input fields for email and password */
-    input[type="email"],
-    input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 15px;
-      transition: 0.3s;
-    }
-
-    /* I added a focus effect to highlight active input fields. Referenced from - https://developer.mozilla.org/en-US/docs/Web/CSS/:focus */
-    input:focus {
-      border-color: #007bff;
-      outline: none;
-      box-shadow: 0 0 4px rgba(0,123,255,0.3);
-    }
-
-    /* I styled the login button for a clear call-to-action */
-    button {
-      width: 100%;
-      background-color: #007bff;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    /* I added a hover effect for better interactivity also user can tell that this is a button that they could click into */
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    /* Styled login error or success messages shown by Django */
-    .message {
-      text-align: center;
-      color: #d9534f;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    /* I included footer text for help and account creation links */
-    .footer-text {
-      text-align: center;
-      color: #777;
-      margin-top: 25px;
-      font-size: 13px;
     }
   </style>
 </head>
+
 <body>
 
-  <!-- I created a container to hold the login form -->
-  <div class="login-container">
-    <h2>Welcome to Digi HACCP</h2>
+  <!-- 🌟 Header -->
+  <header class="w-full py-5 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-10xl shadow-md border-b border-white/30 tracking-wide">
+    Digi HACCP
+  </header>
+  <br>
+  <!-- 💳 Login Card -->
+  <main class="flex flex-col items-center justify-center flex-grow py-14 px-4">
+    <div class="card bg-base-100 shadow-2xl w-full max-w-md">
+      <div class="card-body items-center text-center">
 
-    <!-- I used a POST form for login so user credentials are sent securely -->
-    <form method="POST">
-      {% csrf_token %}
-      <!-- added CSRF protection to prevent cross-site request attacks. Referenced from - https://docs.djangoproject.com/en/5.2/howto/csrf/ -->
+        <!-- Login Form -->
+        <form method="POST" class="w-full space-y-5">
+          {% csrf_token %}
 
-      <!-- I added an email input field -->
-      <label for="email">Email</label>
-      <input id="email" type="email" name="email" placeholder="Enter your email" required>
+          <div class="form-control w-full">
+            <label class="label justify-center">
+              <span class="label-text font-medium">Email</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              class="input input-bordered input-success w-full text-center"
+              required />
+          </div>
 
-      <!-- added a password input field -->
-      <label for="password">Password</label>
-      <input id="password" type="password" name="password" placeholder="Enter your password" required>
+          <div class="form-control w-full">
+            <label class="label justify-center">
+              <span class="label-text font-medium">Password</span>
+            </label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Enter your password"
+              class="input input-bordered input-success w-full text-center"
+              required />
+          </div>
+          <br>
 
-      <!-- added a login button to submit the form -->
-      <button type="submit">Log In</button>
-    </form>
+          <div class="mt-6">
+            <button type="submit" class="btn btn-success w-full rounded-full">
+              Log In
+            </button>
+          </div>
+        </form>
 
-    <!-- I display Django messages (like 'Invalid credentials') here -->
-    {% for message in messages %}
-      <p class="message">{{ message }}</p>
-    {% endfor %}
+        <!-- Django Messages -->
+        {% if messages %}
+        <div class="mt-4 w-full">
+          {% for message in messages %}
+          <div class="alert alert-error text-sm py-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
 
-    <!-- I added helpful footer and signup option text for users -->
-    <p class="footer-text">Having trouble logging in? Contact your manager for help.</p>
-    <p class="footer-text">No account? <a href="{% url 'signup' %}">Create one</a>.</p>
-  </div>
+        <!-- Divider -->
+        <div class="divider my-6">OR</div>
+
+        <!-- Footer Links -->
+        <p class="text-sm text-gray-600">
+          Don’t have an account?
+          <a href="{% url 'signup' %}" class="link link-success font-semibold">Create one</a>
+        </p>
+        <p class="text-sm text-gray-500 mt-2">
+          Need help? Ask your manager
+        </p>
+      </div>
+    </div>
+  </main>
 
 </body>
 </html>
