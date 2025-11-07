@@ -1,45 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- I declared this as an HTML5 document and set it to English -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manage Users | Digi HACCP</title>
 
-  <!-- DaisyUI -->
+  <!-- I used DaisyUI for styling (it includes Tailwind CSS and comes with nice ready-made components) -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-  <script>
-    document.documentElement.setAttribute("data-theme", "pastel");
-  </script>
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
 
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- I used the Poppins font again to match the rest of the system design -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
+    /* - GENERAL PAGE STYLE - */
+    /* I used a soft green gradient as the background to keep a consistent theme with the rest of my project */
     body {
       font-family: "Poppins", sans-serif;
       background: linear-gradient(135deg, #a8e063, #56ab2f);
-      min-height: 100vh;
+      margin: 0;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* - NAVBAR - */
+    /* This is the navigation bar at the top of the page */
+    .navbar {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* I made the Digi HACCP title bold with a soft text shadow for better visibility */
+    .navbar h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    /* These are my navigation links for moving between pages */
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 25px;
+      transition: 0.2s;
+    }
+
+    .navbar a:hover {
+      color: #e6ffcc;
+    }
+
+    /* - MAIN CONTAINER - */
+    /* This centers my main content and adds some spacing around it */
+    main {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 50px 20px;
+    }
+
+    /* I used a white card layout */
+    .card {
+      background: white;
+      width: 100%;
+      max-width: 1200px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      animation: fadeIn 0.7s ease-out;
+    }
+
+    .card-body {
+      padding: 40px 50px;
+    }
+
+    /* - HEADINGS - */
+    /* This is the main title inside the card */
+    .page-title {
+      color: #333;
+      font-weight: 700;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+
+    /* - TABLE STYLING - */
+    /* This table lists all the users in the database */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    /* I made the table header greenish to match the app’s theme */
+    thead tr {
+      background-color: #f0fdf4;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    /* When the mouse hovers over a row, it slightly highlights it. This added for users to know where they are on the list. Might take this out in the future */
+    tbody tr:hover {
+      background-color: #f9f9f9;
+      transition: background 0.2s ease-in-out;
+    }
+
+    /* - ALERT MESSAGES - */
+    /* These are used for Django messages like success or info */
+    .alert {
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    /* - ANIMATION - */
+    /* I added a smooth fade-in animation for when the page loads */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* - RESPONSIVE DESIGN - */
+    /* This makes the page and table adjust to smaller screens like tablets or phones */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 25px;
+      }
+      table {
+        font-size: 14px;
+      }
+      .navbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+      }
     }
   </style>
 </head>
+
 <body>
+  <!--  NAVBAR  -->
+  <!-- This is my main navigation bar for the manager -->
+  <nav class="navbar">
+    <h1>Digi HACCP</h1>
+    <div>
+      <a href="{% url 'manager_dashboard' %}">Dashboard</a>
+      <a href="{% url 'manage_delis' %}">Manage Delis</a>
+      <a href="{% url 'logout' %}">Logout</a>
+    </div>
+  </nav>
 
-  <!-- Header -->
-  <header class="w-full py-5 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-3xl shadow-md border-b border-white/30 tracking-wide">
-    Digi HACCP – Manage Users
-  </header>
-
-  <!-- Content -->
-  <main class="flex-grow flex justify-center p-6">
-    <div class="card bg-base-100 shadow-2xl w-full max-w-6xl">
+  <!-- MAIN CONTENT -->
+  <main>
+    <div class="card">
       <div class="card-body">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold text-primary">User Management</h2>
+        <!-- Header area with title and back button -->
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="page-title">User Management</h2>
           <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">← Back to Dashboard</a>
         </div>
 
-        <!-- Django Messages -->
+        <!-- Django message section for feedback -->
         {% if messages %}
         <div class="mb-4">
           {% for message in messages %}
@@ -48,7 +181,8 @@
         </div>
         {% endif %}
 
-        <!-- User Table -->
+        <!--  USER TABLE  -->
+        <!-- This table displays all users and their roles -->
         <div class="overflow-x-auto">
           <table class="table table-zebra w-full">
             <thead>
@@ -63,7 +197,17 @@
               {% for user in users %}
               <tr>
                 <td class="font-medium">{{ user.email }}</td>
-                <td>{{ user.role|title }}</td>
+
+                <!-- This shows the user’s role using different coloured badges -->
+                <td>
+                  {% if user.role == "manager" %}
+                    <span class="badge badge-success">{{ user.role|title }}</span>
+                  {% else %}
+                    <span class="badge badge-info">{{ user.role|title }}</span>
+                  {% endif %}
+                </td>
+
+                <!-- This shows which delis are assigned to the user -->
                 <td>
                   {% if user.delis.all %}
                     {% for deli in user.delis.all %}
@@ -75,24 +219,28 @@
                     <span class="text-gray-400 italic">—</span>
                   {% endif %}
                 </td>
+
+                <!-- Actions for assigning delis or deleting a user -->
                 <td>
                   <div class="flex flex-wrap gap-2">
-                    <!-- Assign delis -->
                     <a href="{% url 'assign_delis' user.id %}" class="btn btn-primary btn-sm">Assign Delis</a>
 
-                    <!-- Delete (hide self) -->
                     {% if user.id != request.user.id %}
+                    <!-- I used a confirm popup before deleting a user -->
                     <a href="{% url 'delete_user' user.id %}" 
                        class="btn btn-error btn-sm"
                        onclick="return confirm('Delete {{ user.email }}?')">
                       Delete
                     </a>
                     {% else %}
+                    <!-- This disables the delete button for the current logged-in manager. -->
                     <button class="btn btn-disabled btn-sm">You</button>
                     {% endif %}
                   </div>
                 </td>
               </tr>
+
+              <!-- Message if no users exist -->
               {% empty %}
               <tr>
                 <td colspan="4" class="text-center text-gray-500 py-6">No users found.</td>
@@ -101,10 +249,8 @@
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
   </main>
-
 </body>
 </html>

@@ -1,5 +1,5 @@
 from django import forms
-from .models import User   # we don't need Deli directly here unless you want to customise the widget
+from .models import User   
 
 # This form handles the creation of new user accounts in my system
 class SignUpForm(forms.ModelForm):
@@ -16,7 +16,7 @@ class SignUpForm(forms.ModelForm):
     # The Meta class tells Django which model this form is linked to
     class Meta:
         model = User  # connects the form to my custom User model
-        # ✅ use "delis" (ManyToManyField), no more "deli_id"
+        # use "delis" (ManyToManyField), no more "deli_id"
         fields = ["email", "role", "delis"]  # these fields come from the User model
         widgets = {
             "email": forms.EmailInput(attrs={"placeholder": "you@example.com"}),  # adds a placeholder for the email box
@@ -48,7 +48,7 @@ class SignUpForm(forms.ModelForm):
             role=self.cleaned_data.get("role") or "staff",  # assigns 'staff' by default if no role selected
         )
 
-        # ✅ Handle the many-to-many delis relation
+        # Handle the many-to-many delis relation
         delis = self.cleaned_data.get("delis")
         if delis:
             user.delis.set(delis)

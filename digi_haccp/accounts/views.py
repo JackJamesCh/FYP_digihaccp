@@ -1,130 +1,109 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django.contrib.auth import logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
 from .forms import DeliForm, AssignDeliForm
-from .models import Deli
+from .models import Deli, User
+from django.contrib.auth.decorators import user_passes_test
 
-
-# ----------------------------
 # Handles the login process
-# ----------------------------
+# I made this function to handle logging users into the system using their email and password.
 def login_view(request):
     if request.method == "POST":
         email = request.POST['email']
         password = request.POST['password']
 
-        # Check if the email and password match a user in the database
+        # This checks if the email and password match a valid user in the database
         user = authenticate(request, email=email, password=password)
         if user is not None:
             # If authentication succeeds, log the user in
             login(request, user)
 
-            # 🔹 Redirect based on user role
+            # Redirect users based on their role
             if user.role == 'manager':
                 return redirect('manager_dashboard')
             else:
                 return redirect('dashboard')
         else:
-            # If login fails, show an error message
+            # Show an error message if credentials are wrong
             messages.error(request, "Invalid email or password")
 
-    # If it’s a GET request, just show the login page
+    # If it's a GET request, it just displays the login page
     return render(request, 'accounts/login.html')
 
-
-# ----------------------------
 # Dashboard for staff
-# ----------------------------
+# I made this view for normal staff users once they log in.
 @login_required(login_url='login')
 def dashboard_view(request):
-    # Renders the dashboard page with user information
+    # Renders the staff dashboard and passes in user data
     return render(request, 'accounts/dashboard.html')
 
-
-# ----------------------------
-# 🔹 Dashboard for managers
-# ----------------------------
+# Dashboard for managers
+# Only managers should be able to see this page.
 @login_required(login_url='login')
 def manager_dashboard_view(request):
-    # Allow only managers to access this page
     if request.user.role != 'manager':
-        # If a staff tries to access, send them to normal dashboard
+        # If someone without the manager role tries to access this, send them back to staff dashboard
         return redirect('dashboard')
-
-    # Render manager dashboard
     return render(request, 'accounts/manager_dashboard.html')
 
-
-# ----------------------------
-# Handles logging out users
-# ----------------------------
+# Handles user logout
+# This function logs users out of the system.
 def logout_view(request):
-    # Logs the user out and redirects back to the login page
     logout(request)
     return redirect('login')
 
-
-# ----------------------------
-# Handles user registration (sign-up)
-# ----------------------------
+# Handles user registration (Sign-Up)
+# This view lets new users register for an account.
 def signup_view(request):
-    # If a logged-in user tries to access signup, redirect them to dashboard
+    # If the user is already logged in, they shouldn’t see the signup page
     if request.user.is_authenticated:
         return redirect('dashboard')
 
-    # If the signup form was submitted
     if request.method == "POST":
         form = SignUpForm(request.POST)
 
-        # Check if all fields are valid and the data passes form validation
+        # Check if all form data is valid
         if form.is_valid():
-            # Save the new user to the database
+            # Save new user in the database
             user = form.save()
 
-            # Automatically log the new user in after signup for a smoother experience
+            # Automatically log in the new user after signing up
             logged_in_user = authenticate(request, email=user.email, password=form.cleaned_data["password"])
             if logged_in_user:
                 login(request, logged_in_user)
                 messages.success(request, "Account created. Welcome!")
                 return redirect('dashboard')
 
-            # If auto-login doesn’t work, prompt them to log in manually
+            # If automatic login fails, they can log in manually
             messages.success(request, "Account created. Please log in.")
             return redirect('login')
     else:
-        # If it’s not a POST request, show an empty signup form
+        # If it’s not a POST request, show a blank signup form
         form = SignUpForm()
 
-    # Render the signup page and pass the form into the template
+    # Render the signup page with the signup form
     return render(request, 'accounts/signup.html', {"form": form})
 
-# ----------------------------
-# 🔹 Manager-only user management
-# ----------------------------
-from django.contrib.auth.decorators import user_passes_test
-from .models import User
-
-# Helper: only allow managers
+# Manager-only helper
+# I created this helper function so only managers can access certain views.
 def is_manager(user):
     return user.is_authenticated and user.role == 'manager'
 
-
-# ✅ View to list all users (only for managers)
+# View to manage all users (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_users_view(request):
-    users = User.objects.all().order_by('email')  # fetch all users from DB
+    # This pulls all users from the database, sorted by email
+    users = User.objects.all().order_by('email')
     return render(request, 'accounts/manage_users.html', {'users': users})
 
-
-# ✅ View to delete a user (only for managers)
+# View to delete users (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_user_view(request, user_id):
     try:
         user = User.objects.get(id=user_id)
-        # prevent deleting other managers
+        # Prevent managers from deleting other managers
         if user.role == 'manager':
             messages.error(request, "You cannot delete another manager.")
         else:
@@ -134,26 +113,28 @@ def delete_user_view(request, user_id):
         messages.error(request, "User not found.")
     return redirect('manage_users')
 
-
-# ✅ List all delis
+# View to list all delis (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_delis_view(request):
+    # Pulls all delis from the database and displays them
     delis = Deli.objects.all().order_by('deli_name')
     return render(request, 'accounts/manage_delis.html', {'delis': delis})
 
-
-# ✅ Create or edit a deli
+# View to create or edit a deli (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def deli_form_view(request, deli_id=None):
+    # If an ID is passed, the manager is editing a deli
     if deli_id:
         deli = Deli.objects.get(pk=deli_id)
         form = DeliForm(instance=deli)
         title = "Edit Deli"
     else:
+        # Otherwise, they’re adding a new one
         deli = None
         form = DeliForm()
         title = "Add New Deli"
 
+    # Handles the form submission
     if request.method == "POST":
         form = DeliForm(request.POST, instance=deli)
         if form.is_valid():
@@ -164,10 +145,10 @@ def deli_form_view(request, deli_id=None):
                 messages.success(request, "New deli created successfully.")
             return redirect('manage_delis')
 
+    # Render the form page
     return render(request, 'accounts/deli_form.html', {'form': form, 'title': title})
 
-
-# ✅ Delete a deli
+# View to delete a deli (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_deli_view(request, deli_id):
     try:
@@ -178,8 +159,7 @@ def delete_deli_view(request, deli_id):
         messages.error(request, "Deli not found.")
     return redirect('manage_delis')
 
-
-# ✅ View to assign a user to multiple delis
+# Assign delis to users (Manager only)
 @user_passes_test(is_manager, login_url='dashboard')
 def assign_delis_view(request, user_id):
     user = User.objects.get(id=user_id)
@@ -192,4 +172,5 @@ def assign_delis_view(request, user_id):
     else:
         form = AssignDeliForm(instance=user)
 
+    # Renders the assign delis form
     return render(request, 'accounts/assign_delis.html', {'form': form, 'user': user})

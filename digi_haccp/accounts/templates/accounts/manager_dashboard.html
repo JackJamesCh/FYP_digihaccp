@@ -1,93 +1,247 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- I declared this as an HTML5 document and set the language to English -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manager Dashboard | Digi HACCP</title>
 
-  <!-- DaisyUI CDN -->
+  <!-- I used DaisyUI (which includes Tailwind CSS) to easily style buttons and layouts -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-  <script>
-    document.documentElement.setAttribute("data-theme", "pastel");
-  </script>
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
 
+  <!-- I imported the Poppins font to match the design of my other pages -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
+    /* - PAGE STYLING - */
+    /* I used a soft green gradient background to match the Digi HACCP theme */
     body {
       font-family: "Poppins", sans-serif;
       background: linear-gradient(135deg, #a8e063, #56ab2f);
-      min-height: 100vh;
       margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
+
+    /* - NAVBAR - */
+    /* This is the main navbar that stays at the top of the page */
+    .navbar {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* I made the Digi HACCP title bold and added a soft shadow for readability */
+    .navbar h1 {
+      font-size: 28px;
+      font-weight: 800;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      margin: 0;
+    }
+
+    /* These are the navigation links in the navbar */
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 25px;
+      transition: 0.2s;
+    }
+
+    .navbar a:hover {
+      color: #e6ffcc;
+    }
+
+    /* - MAIN DASHBOARD CONTAINER - */
+    /* This white box in the center holds all the dashboard content */
+    .dashboard-container {
+      max-width: 900px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      padding: 40px 50px;
+      margin: 50px auto;
+      animation: fadeIn 0.7s ease-out;
+    }
+
+    /* - HEADER SECTION - */
+    /* This part displays the manager’s email and role */
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-header h2 {
+      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .dashboard-header p {
+      color: #555;
+      font-size: 15px;
+    }
+
+    /* I added a green highlight color for the user role */
+    .role {
+      color: #2e7d32;
+      font-weight: 600;
+    }
+
+    /* - DATE & TIME BOX - */
+    /* This shows the current date and time at the top of the dashboard */
+    .datetime-box {
+      background: #e0f7e0;
+      border-left: 6px solid #56ab2f;
+      padding: 15px 20px;
+      border-radius: 10px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* - INFO CARDS - */
+    /* These are small boxes showing key information or tips */
+    .info-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: space-between;
+      margin-bottom: 35px;
+    }
+
+    /* Each card has a subtle shadow and soft background */
+    .info-card {
+      flex: 1 1 48%;
+      background: #f8f8f8;
+      border-radius: 14px;
+      padding: 25px;
+      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+      transition: 0.3s;
+    }
+
+    .info-card:hover {
+      background: #f0fff0;
+      transform: scale(1.02);
+    }
+
+    .info-card h3 {
+      color: #333;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .info-card p {
+      color: #666;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    /* This class highlights important data, like assigned delis */
+    .info-value {
+      color: #56ab2f;
+      font-weight: 700;
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    /* - ANIMATION - */
+    /* I added a fade-in animation for when the page loads */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* - RESPONSIVE DESIGN - */
+    /* This ensures the dashboard looks good on smaller screens */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 25px;
+        margin: 30px 15px;
+      }
+
+      .info-section {
+        flex-direction: column;
+      }
+
+      .info-card {
+        flex: 1 1 100%;
+      }
+
+      .navbar {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+    }
   </style>
 </head>
+
 <body>
+  <!--  NAVBAR  -->
+  <nav class="navbar">
+    <h1>Digi HACCP</h1>
+    <div>
+      <!-- I added these links for navigation between key manager pages -->
+      <a href="{% url 'manage_users' %}">Manage Users</a>
+      <a href="{% url 'manage_delis' %}">Manage Delis</a>
+      <a href="{% url 'logout' %}">Logout</a>
+    </div>
+  </nav>
 
-  <!-- Header -->
-  <header class="w-full py-4 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-3xl shadow-md border-b border-white/30 tracking-wide">
-    Digi HACCP – Manager Dashboard
-  </header>
+  <!--  MAIN DASHBOARD  -->
+  <div class="dashboard-container">
+    <!-- Displays the logged-in manager’s info -->
+    <div class="dashboard-header">
+      <h2>Welcome, {{ request.user.email }}</h2>
+      <p>Role: <span class="role">{{ request.user.role|title }}</span></p>
+    </div>
 
-  <!-- Main content -->
-  <main class="flex-grow flex items-center justify-center p-6">
-    <div class="card bg-base-100 shadow-2xl w-full max-w-3xl">
-      <div class="card-body">
+    <!-- Current Date and Time (auto updates using JavaScript) Reference: https://www.w3schools.com/js/js_date_methods.asp -->
+    <div class="datetime-box">
+      <span>📅 Current Date & Time</span>
+      <span id="datetime"></span>
+    </div>
 
-        <h2 class="text-2xl font-bold text-primary mb-2">
-          Welcome, {{ request.user.email }}
-        </h2>
-        <p class="text-gray-600 mb-4">
-          Role: <span class="font-semibold text-success">{{ request.user.role|title }}</span>
-        </p>
+    <!-- INFO CARDS -->
+    <div class="info-section">
+      <!-- Shows the delis assigned to the manager -->
+      <div class="info-card">
+        <h3>Assigned Deli Locations</h3>
+        <div class="info-value">{{ request.user.delis.all|join:", "|default:"N/A" }}</div>
+        <p>Linked locations under your management</p>
+      </div>
 
-        <!-- Live date & time -->
-        <div class="alert alert-info mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <span class="font-semibold mb-2 sm:mb-0">Current date & time:</span>
-          <span id="datetime" class="text-lg font-mono"></span>
-        </div>
-
-        <!-- Simple manager info area -->
-        <div class="grid gap-4 md:grid-cols-2">
-          <div class="stat bg-base-200 rounded-xl">
-            <div class="stat-title">Deli ID</div>
-            <div class="stat-value text-primary">
-              {{ request.user.delis.all|join:", "|default:"N/A" }}
-            </div>
-            <div class="stat-desc">Linked location for this manager</div>
-          </div>
-
-          <div class="stat bg-base-200 rounded-xl">
-            <div class="stat-title">Quick tip</div>
-            <div class="stat-desc text-sm">
-              Use this dashboard to monitor staff activity and HACCP records (features you can add later).
-            </div>
-          </div>
-        </div>
-        
-        <!-- Buttons -->
-        <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-between">
-          <a href="{% url 'manage_users' %}" class="btn btn-primary w-full sm:w-auto">
-            Manage Users
-          </a>
-          <a href="{% url 'dashboard' %}" class="btn btn-outline btn-success w-full sm:w-auto">
-            View staff dashboard
-          </a>
-          <a href="{% url 'manage_delis' %}" class="btn btn-primary w-full sm:w-auto">
-            Manage Delis
-          </a>
-          <a href="{% url 'logout' %}" class="btn btn-error w-full sm:w-auto">
-            Log out
-          </a>
-        </div>
-
-
+      <!-- A quick tip to help managers understand what to do here -->
+      <div class="info-card">
+        <h3>Quick Tip</h3>
+        <p>Use this dashboard to manage users, oversee deli activity, and maintain HACCP records.</p>
       </div>
     </div>
-  </main>
 
-  <!-- Live clock script -->
+    <!--  ACTION BUTTONS  -->
+    <div class="flex flex-wrap justify-center gap-4 mt-6">
+      <!-- These buttons link to other key pages -->
+      <a href="{% url 'manage_users' %}" class="btn btn-accent px-8 py-2">Manage Users</a>
+      <a href="{% url 'dashboard' %}" class="btn btn-info px-8 py-2">View Staff Dashboard</a>
+      <a href="{% url 'manage_delis' %}" class="btn btn-success px-8 py-2">Manage Delis</a>
+    </div>
+  </div>
+
+  <!--  LIVE CLOCK SCRIPT  -->
+  <!-- I used JavaScript to show a live clock that updates every second Reference: https://docs.vultr.com/javascript/examples/display-date-and-time-->
   <script>
     function updateDateTime() {
       const now = new Date();
@@ -95,18 +249,17 @@
         weekday: "long",
         year: "numeric",
         month: "long",
-        day: "numeric",
+        day: "numeric"
       });
       const timeStr = now.toLocaleTimeString(undefined, {
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
+        second: "2-digit"
       });
       document.getElementById("datetime").textContent = `${dateStr} | ${timeStr}`;
     }
     updateDateTime();
     setInterval(updateDateTime, 1000);
   </script>
-
 </body>
 </html>

@@ -1,173 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Account | Digi HACCP</title>
+  <!-- I set up my document type and language for English -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign Up | Digi HACCP</title>
+
+  <!-- I used DaisyUI because it includes Tailwind CSS and provides modern styled buttons and elements -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+
+  <!-- I used the same Google font (Poppins) to keep the site design consistent -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    /* This is an overall layout which is centered on the screen with a light background for clarity and to be cohesive with the other web pages */
+    /* GENERAL LAYOUT */
+    /* I gave the page a soft green gradient background to match my project’s color theme */
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #f5f7fa;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
       margin: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
     }
 
-    /* This just a simple white card holds the signup form to make it stand out from the background */
+    /* HEADER */
+    /* The main Digi HACCP title at the top of the page */
+    header {
+      width: 100%;
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: white;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      margin-bottom: 20px;
+    }
+
+    /* CARD CONTAINER */
+    /* I used a white card box to hold the signup form neatly in the center */
     .card {
-      background: #fff;
+      background: white;
+      padding: 40px 50px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
       width: 100%;
       max-width: 460px;
-      padding: 36px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, .1);
+      animation: fadeIn 0.6s ease-out;
     }
 
-    /* The page heading */
-    h2 {
-      margin: 0 0 18px;
-      text-align: center;
+    .card h2 {
+      font-weight: 700;
       color: #333;
+      text-align: center;
+      margin-bottom: 25px;
     }
 
-    /* making sure each form field section has consistent spacing */
-    .row {
-      margin-bottom: 16px;
-    }
-
-    /*  The Labels are styled clearly to help users know what to fill in */
+    /* FORM STYLING */
+    /* I styled the labels and inputs to make the form look neat and easy to read */
     label {
       display: block;
-      margin-bottom: 6px;
       font-weight: 600;
+      margin-bottom: 6px;
       color: #444;
     }
 
-    /* I made sure Inputs and dropdowns share the same style for consistency */
+    /* I used soft rounded corners and border colors for the inputs */
     input, select {
       width: 100%;
-      padding: 10px 12px;
+      padding: 10px 14px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 15px;
+      transition: 0.2s ease-in-out;
     }
 
-    /* Highlight input fields when users click or type in them */
+    /* When focused, the input fields have a green highlight */
     input:focus, select:focus {
       outline: none;
-      border-color: #007bff;
-      box-shadow: 0 0 4px rgba(0, 123, 255, .3);
+      border-color: #56ab2f;
+      box-shadow: 0 0 6px rgba(86, 171, 47, 0.3);
     }
 
-    /* Space above the submit button */
-    .actions {
-      margin-top: 18px;
+    .row {
+      margin-bottom: 18px;
     }
 
-    /* The main button uses Digi HACCP’s blue color scheme */
-    button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      background: #007bff;
-      color: #fff;
-    }
-
-    /* Slight color change when hovering for better user experience */
-    button:hover {
-      background: #005ec4;
-    }
-
-    /* Helpful text under the form */
-    .help {
-      text-align: center;
-      margin-top: 12px;
-      font-size: 14px;
-      color: #666;
-    }
-
-    /* Django automatically shows validation errors under each field */
+    /*  ERROR & MESSAGE STYLING  */
+    /* I added red error text under the inputs for invalid fields */
     .errorlist {
-      color: #d9534f;
-      margin: 6px 0 0;
+      color: #e53935;
+      font-size: 0.9rem;
+      margin: 5px 0 0;
       padding-left: 18px;
     }
 
-    /* Any general Django messages (like success or error alerts) appear here */
+    /* This shows general error or success messages from Django */
     .messages {
       text-align: center;
+      color: #e53935;
       margin-top: 10px;
-      color: #d9534f;
     }
 
-    /* I made sure thatLinks keep the same blue tone for a consistent look */
+    /* ANIMATION */
+    /* A smooth fade-in when the page loads */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* FOOTER / HELP TEXT */
+    /* A small section at the bottom for people who already have an account */
+    .help {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 14px;
+      color: #555;
+    }
+
     a {
-      color: #007bff;
+      color: #56ab2f;
       text-decoration: none;
+      font-weight: 600;
     }
 
     a:hover {
       text-decoration: underline;
     }
+
+    /* RESPONSIVE DESIGN */
+    /* I made the padding smaller on phones to keep it looking clean */
+    @media (max-width: 480px) {
+      .card {
+        padding: 25px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- The card acts as the main signup box -->
+  <!-- HEADER -->
+  <header>Digi HACCP</header>
+
+  <!-- SIGNUP CARD -->
   <div class="card">
-    <h2>Create your account</h2>
+    <h2>Create Your Account</h2>
 
-    <!-- This form collects all user signup details -->
+    <!-- Django signup form -->
     <form method="POST" novalidate>
-      {% csrf_token %}
-      <!-- The CSRF token protects the form against security attacks -->
+      {% csrf_token %} <!-- This protects the form from CSRF attacks -->
 
-      <!-- Each of the following rows displays a field from the Django signup form -->
+      <!-- Email input -->
       <div class="row">
         <label for="id_email">Email</label>
         {{ form.email }}
         {{ form.email.errors }}
       </div>
 
+      <!-- Role input (manager/staff) -->
       <div class="row">
         <label for="id_role">Role</label>
         {{ form.role }}
         {{ form.role.errors }}
       </div>
 
+      <!-- Password input -->
       <div class="row">
         <label for="id_password">Password</label>
         {{ form.password }}
         {{ form.password.errors }}
       </div>
 
+      <!-- Password confirmation input -->
       <div class="row">
-        <label for="id_password_confirm">Confirm password</label>
+        <label for="id_password_confirm">Confirm Password</label>
         {{ form.password_confirm }}
         {{ form.password_confirm.errors }}
       </div>
 
-      <!-- The submit button creates the user account -->
-      <div class="actions">
-        <button type="submit">Create Account</button>
-      </div>
+      <!-- The green signup button -->
+      <button type="submit" class="btn btn-success w-full mt-4 rounded-full hover:scale-105 transition-transform">
+        Create Account
+      </button>
     </form>
 
-    <!-- If there are any messages from the backend (like success or error), they show here -->
+    <!-- Django messages (success or duplicate account warnings) -->
     <div class="messages">
       {% for message in messages %}
         <p>{{ message }}</p>
       {% endfor %}
     </div>
 
-    <!-- A link for users who already have an account -->
-    <p class="help">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+    <!-- Footer link to login -->
+    <p class="help">
+      Already have an account?
+      <a href="{% url 'login' %}">Log in</a>
+    </p>
   </div>
 
 </body>

@@ -1,104 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- I started by declaring this as an HTML5 document and set the language to English -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login | Digi HACCP</title>
 
-  <!-- ✅ DaisyUI standalone (includes Tailwind) -->
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-
-  <!-- ✅ Set theme -->
-  <script>
-    document.documentElement.setAttribute("data-theme", "pastel");
-  </script>
-
-  <!-- ✅ Modern font -->
+  <!-- I used the Poppins font again from Google Fonts to keep the same modern, clean style across all pages -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <style>
+    /* - GENERAL - */
+    /* I used a soft green gradient background and made the page layout centered with flexbox */
     body {
       font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      background: linear-gradient(135deg, #a8e063, #56ab2f); /* I chose these colours similar to DaisyUI's pastel theme. Reference:https://imagecolorpicker.com/ */
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: flex-start;
       margin: 0;
+    }
+
+    /* - HEADER - */
+    /* This is the Digi HACCP title at the top of the page */
+    header {
+      width: 100%;
+      text-align: center;
+      padding: 10px 0 5px;
+      font-size: 42px;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      letter-spacing: 1px;
+      animation: fadeDown 1s ease;
+    }
+
+    /* - LOGIN CARD - */
+    /* I created a white card in the middle of the page to hold the login form */
+    .login-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 45px;
+      text-align: center;
+      animation: fadeUp 1s ease;
+    }
+
+    /* This is the main heading inside the card */
+    h2 {
+      color: #333;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    /* I added a small subtitle below the heading */
+    p.subtitle {
+      color: #555;
+      font-size: 15px;
+      margin-bottom: 30px;
+    }
+
+    /* - INPUTS - */
+    /* These are my text inputs for email and password. I gave them rounded corners and a light green focus effect. Reference:https://www.w3schools.com/cssref/sel_focus.php */
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 30px;
+      border: 1.5px solid #56ab2f;
+      background: #f5faf5;
+      font-size: 15px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    /* When the user clicks inside an input box, it glows slightly */
+    input:focus {
+      border-color: #2e7d32;
+      box-shadow: 0 0 8px rgba(86, 171, 47, 0.3);
+      background: #fff;
+    }
+
+    /* The labels are bold and sit above each input for easy identification */
+    label {
+      display: block;
+      text-align: left;
+      color: #333;
+      font-weight: 600;
+      margin: 10px 0 5px;
+    }
+
+    /* - BUTTON - */
+    /* This is my login button. I used a green gradient and added a small hover animation */
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #56ab2f, #a8e063);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: scale(1.03);
+      box-shadow: 0 4px 10px rgba(86, 171, 47, 0.4);
+    }
+
+    /* - FOOTER LINKS - */
+    /* I added a divider with lines on both sides for style. Reference:https://www.w3schools.com/howto/howto_css_dividers.asp */
+    .divider {
+      margin: 25px 0;
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #aaa;
+      font-weight: 500;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #ccc;
+    }
+
+    .divider:not(:empty)::before {
+      margin-right: 10px;
+    }
+
+    .divider:not(:empty)::after {
+      margin-left: 10px;
+    }
+
+    /* I added links under the form for sign-up or help */
+    .footer-links {
+      font-size: 14px;
+      color: #333;
+    }
+
+    .footer-links a {
+      color: #2e7d32;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+
+    /* - ANIMATIONS - */
+    /* These are the fade animations for when elements appear on the screen */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
 
 <body>
+  <!-- This is the Digi HACCP logo header -->
+  <header>Digi HACCP</header>
 
-  <!-- 🌟 Header -->
-  <header class="w-full py-5 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-10xl shadow-md border-b border-white/30 tracking-wide">
-    Digi HACCP
-  </header>
-  <br>
-  <!-- 💳 Login Card -->
-  <main class="flex flex-col items-center justify-center flex-grow py-14 px-4">
-    <div class="card bg-base-100 shadow-2xl w-full max-w-md">
-      <div class="card-body items-center text-center">
+  <!-- I wrapped the login card in a main section and centered it -->
+  <main style="flex-grow: 1; display: flex; justify-content: center; align-items: center; width: 100%; padding: 20px;">
+    <div class="login-container">
+      <!-- Friendly welcome message for users. Reference https://symbl.cc/ -->
+      <h2>Welcome Back 👋</h2>
+      <p class="subtitle">Log in to continue to your dashboard</p>
 
-        <!-- Login Form -->
-        <form method="POST" class="w-full space-y-5">
-          {% csrf_token %}
+      <!-- This is my Django login form -->
+      <form method="POST">
+        {% csrf_token %} <!-- CSRF token helps protect the form from malicious requests -->
 
-          <div class="form-control w-full">
-            <label class="label justify-center">
-              <span class="label-text font-medium">Email</span>
-            </label>
-            <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              class="input input-bordered input-success w-full text-center"
-              required />
-          </div>
+        <!-- Email field -->
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required />
 
-          <div class="form-control w-full">
-            <label class="label justify-center">
-              <span class="label-text font-medium">Password</span>
-            </label>
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              class="input input-bordered input-success w-full text-center"
-              required />
-          </div>
-          <br>
+        <!-- Password field -->
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter your password" required />
 
-          <div class="mt-6">
-            <button type="submit" class="btn btn-success w-full rounded-full">
-              Log In
-            </button>
-          </div>
-        </form>
+        <!-- Submit button -->
+        <button type="submit">Log In</button>
+      </form>
 
-        <!-- Django Messages -->
-        {% if messages %}
-        <div class="mt-4 w-full">
-          {% for message in messages %}
-          <div class="alert alert-error text-sm py-2">{{ message }}</div>
-          {% endfor %}
-        </div>
-        {% endif %}
+      <!-- I added this to show error messages from Django (like wrong email or password) -->
+      {% if messages %}
+      <div style="margin-top:15px;">
+        {% for message in messages %}
+        <div style="color:#e53935; font-size:14px; font-weight:500;">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
 
-        <!-- Divider -->
-        <div class="divider my-6">OR</div>
+      <!-- A small divider for design -->
+      <div class="divider">OR</div>
 
-        <!-- Footer Links -->
-        <p class="text-sm text-gray-600">
-          Don’t have an account?
-          <a href="{% url 'signup' %}" class="link link-success font-semibold">Create one</a>
-        </p>
-        <p class="text-sm text-gray-500 mt-2">
-          Need help? Ask your manager
-        </p>
+      <!-- Footer section with link to create account and a little help text -->
+      <div class="footer-links">
+        <p>Don’t have an account? <a href="{% url 'signup' %}">Create one</a></p>
+        <p>Need help? Ask your manager</p>
       </div>
     </div>
   </main>
-
 </body>
 </html>

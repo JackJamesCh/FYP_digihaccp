@@ -1,39 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- I added this to declare the document as HTML5 and set the page language to English -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manage Delis | Digi HACCP</title>
 
+  <!-- I used DaisyUI which is built on top of Tailwind CSS — it makes buttons, tables and forms easier to style -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
   <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+
+  <!-- I used the Poppins font again to keep the same clean, modern look across all pages -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* - PAGE STYLING - */
+    /* I gave the background a green gradient to match the Digi HACCP theme. I might change, still not a fan of the colour scheme */
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* - NAVBAR - */
+    /* This is the main navigation bar at the top of the page */
+    .navbar {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* I made the Digi HACCP title bold and added a light shadow */
+    .navbar h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    /* These are the navigation links (Dashboard, Manage Users, Logout) */
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 25px;
+      transition: 0.2s;
+    }
+
+    .navbar a:hover {
+      color: #e6ffcc;
+    }
+
+    /* - MAIN CONTENT AREA - */
+    /* I used flexbox to center the main content and give it spacing from the top */
+    main {
+      flex-grow: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 20px;
+    }
+
+    /* This is the white card that holds all the content inside */
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 1200px;
+      animation: fadeIn 0.7s ease-out;
+    }
+
+    .card-body {
+      padding: 40px 50px;
+    }
+
+    /* The main heading “Manage Delis” */
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* - BUTTONS - */
+    /* I gave the buttons a hover animation that makes them scale slightly. Good to give Users Feedback */
+    .btn {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* - TABLE STYLING - */
+    /* This table displays all the delis stored in the system */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    thead tr {
+      background-color: #f0fdf4; /* light green for the header */
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    /* When hovering over a row, it slightly highlights */
+    tbody tr:hover {
+      background-color: #f9f9f9;
+      transition: background 0.2s ease-in-out;
+    }
+
+    /* - ALERT MESSAGES - */
+    /* These appear when a deli is added, edited, or deleted successfully */
+    .alert {
+      border-radius: 10px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    /* - ANIMATIONS - */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* This ensures the table and layout look good on smaller screens */
+    @media (max-width: 768px) {
+      .card-body {
+        padding: 25px;
+      }
+
+      .navbar {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+      }
+
+      table {
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
 
-<body class="bg-gradient-to-br from-green-200 to-green-400 min-h-screen">
-  <header class="w-full py-5 bg-opacity-20 backdrop-blur-sm text-white text-center font-extrabold text-3xl shadow-md border-b border-white/30 tracking-wide">
-    Digi HACCP – Manage Delis
-  </header>
+<body>
+  <!--  NAVBAR SECTION  -->
+  <nav class="navbar">
+    <h1>Digi HACCP</h1>
+    <div>
+      <!-- Navigation links for the manager -->
+      <a href="{% url 'manager_dashboard' %}">Dashboard</a>
+      <a href="{% url 'manage_users' %}">Manage Users</a>
+      <a href="{% url 'logout' %}">Logout</a>
+    </div>
+  </nav>
 
-  <main class="flex flex-col items-center justify-center p-6">
-    <div class="card bg-base-100 shadow-2xl w-full max-w-5xl">
+  <!--  MAIN CONTENT SECTION  -->
+  <main>
+    <div class="card">
       <div class="card-body">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-2xl font-bold text-primary">Delis</h2>
-          <a href="{% url 'new_deli' %}" class="btn btn-success">+ Add Deli</a>
+        <!-- Header with page title and “Add Deli” button -->
+        <div class="flex justify-between items-center mb-6">
+          <h2>Manage Delis</h2>
+          <a href="{% url 'new_deli' %}" class="btn btn-success btn-lg">+ Add Deli</a>
         </div>
 
+        <!-- Django messages section (for success notifications) -->
         {% if messages %}
-        <div class="mb-4">
+        <div class="mb-4 space-y-2">
           {% for message in messages %}
-          <div class="alert alert-info">{{ message }}</div>
+          <div class="alert alert-success shadow-md">{{ message }}</div>
           {% endfor %}
         </div>
         {% endif %}
 
+        <!-- This table lists all the delis stored in the database -->
         <div class="overflow-x-auto">
-          <table class="table table-zebra w-full">
+          <table class="table table-zebra w-full rounded-box">
             <thead>
-              <tr class="bg-base-200">
+              <tr class="bg-base-200 text-base font-semibold">
                 <th>ID</th>
                 <th>Name</th>
                 <th>Address</th>
@@ -41,29 +203,41 @@
                 <th>Actions</th>
               </tr>
             </thead>
+
+            <!-- Django for-loop to display each deli from the database -->
             <tbody>
               {% for deli in delis %}
               <tr>
                 <td>{{ deli.deli_ID }}</td>
-                <td>{{ deli.deli_name }}</td>
+                <td class="font-medium">{{ deli.deli_name }}</td>
                 <td>{{ deli.address }}</td>
                 <td>{{ deli.phone_number }}</td>
                 <td>
-                  <a href="{% url 'edit_deli' deli.deli_ID %}" class="btn btn-primary btn-sm">Edit</a>
-                  <a href="{% url 'delete_deli' deli.deli_ID %}" class="btn btn-error btn-sm" onclick="return confirm('Delete this deli?');">Delete</a>
+                  <!-- Each row has Edit and Delete buttons -->
+                  <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'edit_deli' deli.deli_ID %}" class="btn btn-primary btn-sm">Edit</a>
+                    <a href="{% url 'delete_deli' deli.deli_ID %}" 
+                       class="btn btn-error btn-sm"
+                       onclick="return confirm('Delete this deli?');">
+                      Delete
+                    </a>
+                  </div>
                 </td>
               </tr>
+
+              <!-- This displays a message if there are no delis -->
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center text-gray-500 py-6">No delis found.</td>
+                <td colspan="5" class="text-center text-gray-500 py-6 italic">No delis found.</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
 
-        <div class="mt-6">
-          <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">Back to Dashboard</a>
+        <!-- A button at the bottom to go back to the dashboard -->
+        <div class="mt-8">
+          <a href="{% url 'manager_dashboard' %}" class="btn btn-outline btn-success">← Back to Dashboard</a>
         </div>
       </div>
     </div>

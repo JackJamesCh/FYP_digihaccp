@@ -9,113 +9,91 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from the .env file for sensitive data like database credentials
+# I used dotenv to keep sensitive data (database credentials and secret keys) outside of my code
 load_dotenv()
 
-# BASE_DIR defines the main directory path of my Django project
+# This points to the main directory of my Django project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# -----------------------------
 # SECURITY & DEBUG SETTINGS
-# -----------------------------
-
-# Secret key used for encryption and Django’s internal security features
+# The secret key is used for encryption
 SECRET_KEY = 'django-insecure-9u$s3b2(%d#x%*sgu=!*@x*5u-*%4@tb69e17=#vrrl&vsoti_'
 
-# Debug mode helps me see detailed error messages during development
-# (I’ll turn this off in production)
+# DEBUG helps me see detailed errors during development
+# I only use this in development — it must be False in production
 DEBUG = True
 
-# Hosts that are allowed to access my app
+# ALLOWED_HOSTS defines which domains or IPs can access my app
 ALLOWED_HOSTS = []
 
-
-# -----------------------------
-# APPLICATIONS
-# -----------------------------
-
+# INSTALLED APPS
 INSTALLED_APPS = [
-    # My custom app for managing users and authentication
+    # My custom app for user accounts, logins, and delis
     'accounts',
-
-    # Default Django apps that handle admin, authentication, sessions, and static files
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # Default Django apps that provide essential features
+    'django.contrib.admin',         # Admin dashboard
+    'django.contrib.auth',          # Authentication system
+    'django.contrib.contenttypes',  # Model content handling
+    'django.contrib.sessions',      # Session management
+    'django.contrib.messages',      # Displaying temporary messages
+    'django.contrib.staticfiles',   # Managing static files
+    'widget_tweaks',                # I added this to easily style Django forms
 ]
 
-
-# -----------------------------
 # MIDDLEWARE
-# -----------------------------
-# Middleware controls the flow of requests and responses through the system.
-# It handles things like security, sessions, and authentication automatically.
+# Middleware handles security, sessions, and requests between the browser and the server
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',  # Protects against CSRF attacks
-    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Handles user authentication
-    'django.contrib.messages.middleware.MessageMiddleware',  # Manages flash messages
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # Helps protect my forms from CSRF attacks
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # Handles login sessions
+    'django.contrib.messages.middleware.MessageMiddleware',      # Displays feedback messages
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',    # Adds security headers
 ]
 
-
-# -----------------------------
-# URL & TEMPLATE CONFIGURATION
-# -----------------------------
-
-# Points Django to my main URL routing file
+# URLS & TEMPLATES
+# ROOT_URLCONF tells Django where my main URL routes are stored
 ROOT_URLCONF = 'digi_haccp.urls'
 
-# Defines where Django looks for HTML templates and how it processes them
+# TEMPLATES tells Django where to find my HTML files and how to render them
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # I can add custom template folders here later if needed
-        'APP_DIRS': True,  # Tells Django to look for templates inside app folders
+        'DIRS': [],  # I could add a global template folder later if needed
+        'APP_DIRS': True,  # Automatically loads templates from my app folders
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',  # Lets me access request data in templates
+                'django.contrib.auth.context_processors.auth', # Makes user data available in templates
+                'django.contrib.messages.context_processors.messages', # Passes messages to the frontend
             ],
         },
     },
 ]
 
-# Points to my WSGI configuration file (used for deployment)
+# WSGI file is used when deploying my Django app to a live server
 WSGI_APPLICATION = 'digi_haccp.wsgi.application'
 
-
-# -----------------------------
-# DATABASE CONFIGURATION
-# -----------------------------
-# This connects my project to the PostgreSQL database using environment variables
+# DATABASE SETTINGS
+# I connected my project to PostgreSQL using environment variables for better security
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',  # I’m using PostgreSQL as my database
-        'NAME': os.getenv('DB_NAME'),               # Database name (from .env file)
-        'USER': os.getenv('DB_USER'),               # Database username
-        'PASSWORD': os.getenv('DB_PASSWORD'),       # Database password
-        'HOST': os.getenv('DB_HOST'),               # Database host address
-        'PORT': os.getenv('DB_PORT'),               # Port used by PostgreSQL
+        'ENGINE': 'django.db.backends.postgresql',  # I’m using PostgreSQL
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
-# For extra security, I’m overriding the secret key and debug mode using .env values
+# I override the SECRET_KEY and DEBUG settings from my .env file for safety
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG') == 'True'
 
-
-# -----------------------------
 # PASSWORD VALIDATION
-# -----------------------------
-# Django’s built-in validators help enforce strong password rules
+# These validators help make sure passwords are strong and secure
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -123,35 +101,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# -----------------------------
 # INTERNATIONALIZATION
-# -----------------------------
-# Handles language and time settings
+# These settings define language, timezone, and localization options
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
-# -----------------------------
 # STATIC FILES
-# -----------------------------
-# Tells Django where to look for static assets like CSS and images
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+# This defines where Django looks for static assets like CSS, JS, and images
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / "static",  # This line tells Django to look in the /static folder you created
+    BASE_DIR / "static",  # This makes Django look inside the static folder I created
 ]
 
-
-
-# -----------------------------
-# DEFAULT SETTINGS
-# -----------------------------
-# Sets default primary key type for all models
+# DEFAULT CONFIGURATION
+# This is the default primary key type for all my database models
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Tells Django to use my custom User model from the accounts app
+# This tells Django to use my custom User model instead of the default one
 AUTH_USER_MODEL = 'accounts.User'

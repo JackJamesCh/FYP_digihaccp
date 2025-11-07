@@ -1,136 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | Digi HACCP</title>
+  <!-- I added this to define the page as HTML5 and set it to English -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Dashboard | Digi HACCP</title>
+
+  <!-- I used DaisyUI here again because it gives me access to ready-made buttons and Tailwind styling -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+
+  <!-- I used the same Google Poppins font to keep my design consistent with the other pages -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* A clean and simple base style for the page */
+    /* I styled the body with a green gradient and used flexbox to keep everything in place */
     body {
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f5f7fa;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #a8e063, #56ab2f);
       margin: 0;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
-    /* I created a blue navigation bar for the time being and easy logout access */
+    /* This is the navigation bar at the top of the page */
     .navbar {
-      background-color: #007bff;
-      color: white;
-      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 15px 40px;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
+    /* I made the Digi HACCP title bold and added a bit of shadow for style */
     .navbar h1 {
+      font-size: 26px;
+      font-weight: 800;
       margin: 0;
-      font-size: 20px;
       letter-spacing: 0.5px;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
-    /* Styled the logout button to make it easy to see and interactive */
-    .logout-btn {
-      background-color: white;
-      color: #007bff;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.3s;
-    }
-
-    .logout-btn:hover {
-      background-color: #e9ecef;
-    }
-
-    /* I used a centered card-style container for the dashboard content. This styling is used on one of my past projects */
+    /* This section holds the main dashboard content in the middle of the page */
     .dashboard-container {
-      max-width: 800px;
-      margin: 60px auto;
+      max-width: 850px;
+      margin: 70px auto;
       background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      padding: 50px;
       text-align: center;
+      animation: fadeIn 0.6s ease-out;
     }
 
+    /* I styled the headings to make them stand out */
     h2 {
       color: #333;
-      font-size: 24px;
+      font-weight: 700;
+      font-size: 26px;
       margin-bottom: 10px;
     }
 
+    /* This part shows the user’s email and role for now */
     .user-info {
       color: #555;
+      margin-top: 10px;
       font-size: 16px;
-      margin-bottom: 25px;
       line-height: 1.6;
     }
 
-    /* I added badges to visually show user roles (manager or staff) */
+    /* The role badge shows what type of user is logged in (like staff or manager) Reference: https://www.w3schools.com/howto/howto_css_badge.asp */
     .role-badge {
       display: inline-block;
-      background-color: #28a745;
+      background: #17a2b8;
       color: white;
-      padding: 5px 12px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 14px;
       font-weight: 600;
       text-transform: capitalize;
     }
 
-    /* Different badge colour for staff users */
-    .role-badge.staff {
-      background-color: #17a2b8;
+    /* This box shows which deli locations are assigned to the staff member */
+    .deli-info {
+      background: #f8f8f8;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 25px auto;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
     }
 
-    /* I included a simple footer for the time being might change in the future */
+    /* The deli section heading */
+    .deli-info h3 {
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    /* The deli names are displayed as a list */
+    .deli-info p {
+      color: #666;
+      font-size: 15px;
+      margin: 0;
+    }
+
+    /* The buttons section lets the user perform quick actions like view reports or record data. They do not have any functions yet */
+    .btn-group {
+      margin-top: 25px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    /* This is the footer that stays at the bottom with the project name */
     footer {
       text-align: center;
-      color: #777;
+      color: white;
       font-size: 13px;
-      margin-top: 60px;
+      margin-top: auto;
+      padding: 20px 0;
+      opacity: 0.9;
+    }
+
+    /* I added a fade-in animation for a smoother appearance when the page loads */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* This makes sure everything still looks good on smaller screens like phones. Reference:https://stackoverflow.com/questions/65363172/how-can-i-make-my-website-look-better-on-mobile */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        padding: 30px 20px;
+        margin: 40px 15px;
+      }
+
+      .navbar {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
-<body>
 
-  <!-- I created a navigation bar with the web name and logout option -->
+<body>
+  <!-- This is my navigation bar with the Digi HACCP title and logout button -->
   <div class="navbar">
-    <h1>Digi HACCP Dashboard</h1>
-    <form action="/logout/" method="get" style="margin:0;">
-      <button class="logout-btn" type="submit">Logout</button>
+    <h1>Digi HACCP</h1>
+    <!-- I added a logout form so users can easily log out of their account -->
+    <form action="{% url 'logout' %}" method="get" style="margin: 0;">
+      <button class="btn btn-error btn-sm">Logout</button>
     </form>
   </div>
 
-  <!-- I designed a simple dashboard section to greet the user and show their basic info -->
+  <!-- This is the main content area where the staff information and actions appear -->
   <div class="dashboard-container">
-    <!-- I display the logged-in user's email dynamically using Django template tags. I got the waving hand emoji from https://symbl.cc/ -->
+    <!-- I used Django template tags to show the user’s email -->
     <h2>Welcome, {{ request.user.email }} 👋</h2>
 
+    <!-- This section shows the user’s role using a coloured badge -->
     <div class="user-info">
-      <!-- I show the user's role with a colored badge -->
       <p>Your Role:
-        <span class="role-badge {% if request.user.role == 'staff' %}staff{% endif %}">
+        <span class="role-badge">
           {{ request.user.role }}
         </span>
       </p>
-
-      <!-- Display the user's Deli ID -->
-      <p>Deli ID: <strong>{{ request.user.delis.all|join:", " }}</strong></p>
     </div>
 
-    <!-- For now, I added a short instruction for what users can do next -->
-    <p>Use the navigation above to get started with your HACCP management tasks.</p>
+    <!-- This part shows which delis are assigned to the logged-in user -->
+    <div class="deli-info">
+      <h3>Assigned Deli Location(s)</h3>
+      <p>{{ request.user.delis.all|join:", "|default:"No deli assigned" }}</p>
+    </div>
+
+    <!-- I added a short line to tell users what they can do on the dashboard. Just so the page looks professional -->
+    <p>Use the options below to manage your HACCP tasks efficiently.</p>
+
+    <!-- These are action buttons (I plan to link them to other features later) -->
+    <div class="btn-group">
+      <a href="#" class="btn btn-primary px-8">View Reports</a>
+      <a href="#" class="btn btn-success px-8">Record Data</a>
+      <a href="#" class="btn btn-outline btn-success px-8">Help</a>
+    </div>
   </div>
 
-  <!-- I added a footer for a professional look changes will be made in the future -->
+  <!-- This is the footer that appears at the bottom of the page. For a professional touch -->
   <footer>
     <p>&copy; 2025 Digi HACCP | All rights reserved</p>
   </footer>
-
 </body>
 </html>
