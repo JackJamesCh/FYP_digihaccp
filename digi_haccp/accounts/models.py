@@ -56,3 +56,141 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email  # Displays the email when referring to a user object
+
+# -------------------------
+#  EXTENSIBLE CHECKLIST SYSTEM
+# -------------------------
+
+class ChecklistTemplate(models.Model):
+    """
+    Defines a *type* of checklist.
+    Example: Food Safety Checklist, Cleaning Checklist, Delivery Log, etc.
+    The app creates these templates; managers cannot edit them.
+    """
+    code = models.CharField(max_length=50, unique=True)   # internal id, e.g. "FOOD_SAFETY"
+    name = models.CharField(max_length=100)               # visible name
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+
+
+class TemplateField(models.Model):
+    """
+    Defines a field inside a template (dynamic field structure).
+    Example: For Food Safety template:
+        - food_name (text)
+        - use_by_date (date)
+        - country_of_origin (text)
+        - core_temp (decimal)
+        - corrective_action (text)
+        - prepared_time (datetime)
+    """
+
+    FIELD_TYPES = [
+        ('text', 'Text'),
+        ('date', 'Date'),
+        ('datetime', 'Date & Time'),
+        ('decimal', 'Decimal Number'),
+        ('number', 'Whole Number'),
+        ('boolean', 'Yes/No'),
+    ]
+
+    template = models.ForeignKey(ChecklistTemplate, on_delete=models.CASCADE, related_name="fields")
+    name = models.CharField(max_length=100)      # internal name
+    label = models.CharField(max_length=255)     # human readable label
+    field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
+    required = models.BooleanField(default=True)
+
+    order = models.PositiveIntegerField(default=0)   # ordering of fields
+
+    def __str__(self):
+        return f"{self.template.name}: {self.label}"
+
+
+
+class Checklist(models.Model):
+    """
+    A single checklist created by a manager for a deli and date.
+    Example:
+        Food Safety Checklist for Deli X on 12 Nov 2025
+    """
+    template = models.ForeignKey(ChecklistTemplate, on_delete=models.PROTECT, related_name="checklists")
+    deli = models.ForeignKey(Deli, on_delete=models.CASCADE, related_name="checklists")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_checklists")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    FREQUENCIES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Bi-Weekly'),
+        ('monthly', 'Monthly'),
+    ]
+
+    frequency = models.CharField(max_length=20, choices=FREQUENCIES, default='daily')
+    title = models.CharField(max_length=255, blank=True)
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title or f"{self.template.name} - {self.deli.deli_name} ({self.frequency})"
+
+
+
+class ChecklistItem(models.Model):
+    """
+    Manager-defined rows/items inside a checklist.
+    Example:
+        For Food Safety:
+            - “Chicken Fillet Tray 1”
+            - “Lasagne Batch (12:00)”
+    """
+    checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="items")
+    name = models.CharField(max_length=255)
+    order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name} ({self.checklist})"
+
+
+
+class ChecklistResponse(models.Model):
+    """
+    A response session representing a staff member completing a checklist.
+    """
+    checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="responses")
+    deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
+    completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="checklist_responses")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Response to {self.checklist} by {self.completed_by.email}"
+
+
+
+class ResponseItem(models.Model):
+    """
+    Stores a SINGLE ANSWER to a SINGLE TEMPLATE FIELD for a SINGLE CHECKLIST ITEM.
+
+    Example for Food Safety:
+        ChecklistItem = “Chicken Fillet Tray 1”
+        TemplateField = “Core Temperature”
+        Answer = 75.5
+    """
+
+    response = models.ForeignKey(ChecklistResponse, on_delete=models.CASCADE, related_name="answers")
+    checklist_item = models.ForeignKey(ChecklistItem, on_delete=models.CASCADE, related_name="responses")
+    template_field = models.ForeignKey(TemplateField, on_delete=models.PROTECT, related_name="responses")
+
+    # Universal answer system:
+    answer_text = models.TextField(null=True, blank=True)
+    answer_date = models.DateField(null=True, blank=True)
+    answer_datetime = models.DateTimeField(null=True, blank=True)
+    answer_decimal = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    answer_number = models.IntegerField(null=True, blank=True)
+    answer_boolean = models.BooleanField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.checklist_item.name} - {self.template_field.label}"

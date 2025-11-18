@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
-from .forms import DeliForm, AssignDeliForm
+from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
 from .models import Deli, User
 from django.contrib.auth.decorators import user_passes_test
 
@@ -174,3 +174,41 @@ def assign_delis_view(request, user_id):
 
     # Renders the assign delis form
     return render(request, 'accounts/assign_delis.html', {'form': form, 'user': user})
+
+
+@login_required
+def create_checklist(request):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = ChecklistForm(request.POST)
+
+        if form.is_valid():
+            checklist = form.save(commit=False)
+            checklist.created_by = request.user
+            checklist.save()
+
+            # Convert textarea lines to checklist items
+            pasted_items = form.cleaned_data.get("items_bulk", "")
+            lines = [line.strip() for line in pasted_items.split("\n") if line.strip()]
+
+            order = 1
+            for line in lines:
+                ChecklistItem.objects.create(
+                    checklist=checklist,
+                    name=line,
+                    order=order
+                )
+                order += 1
+
+            return redirect("checklist_success")
+
+    else:
+        form = ChecklistForm()
+
+    return render(request, "accounts/create_checklist.html", {"form": form})
+
+
+def checklist_success(request):
+    return render(request, "accounts/checklist_success.html")

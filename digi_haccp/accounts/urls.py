@@ -17,4 +17,6 @@ urlpatterns = [
     path('deli/edit/<int:deli_id>/', views.deli_form_view, name='edit_deli'),
     path('deli/delete/<int:deli_id>/', views.delete_deli_view, name='delete_deli'),
     path('assign-delis/<int:user_id>/', views.assign_delis_view, name='assign_delis'),
+    path("checklists/create/", views.create_checklist, name="create_checklist"),
+    path("checklists/success/", views.checklist_success, name="checklist_success"),
 ]

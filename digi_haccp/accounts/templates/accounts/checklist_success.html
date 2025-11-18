@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checklist Created</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+    <script>document.documentElement.setAttribute('data-theme', 'pastel');</script>
+</head>
+
+<body class="bg-green-200 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md">
+        <h2 class="text-2xl font-bold mb-3">Checklist Created Successfully!</h2>
+        <p class="mb-6">Your checklist has been saved.</p>
+
+        <a href="{% url 'create_checklist' %}" class="btn btn-primary w-full">Create Another</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary w-full mt-3">Return to Dashboard</a>
+    </div>
+
+</body>
+</html>
