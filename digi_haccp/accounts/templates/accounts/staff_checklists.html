@@ -1,0 +1,45 @@
+{% extends "accounts/nav_bar.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="dashboard-container">
+    <h2 class="text-2xl font-bold mb-4">Today's Checklists</h2>
+    <p class="text-gray-600 mb-6">Date: {{ today }}</p>
+
+    <table class="table w-full">
+        <thead>
+            <tr>
+                <th>Checklist</th>
+                <th>Deli</th>
+                <th>Template</th>
+                <th>Frequency</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for instance in instances %}
+            <tr>
+                <td>{{ instance.checklist.title }}</td>
+                <td>{{ instance.deli.deli_name }}</td>
+                <td>{{ instance.checklist.template.name }}</td>
+                <td>{{ instance.checklist.frequency|title }}</td>
+                <td>
+                    <a href="{% url 'fill_checklist' instance.id %}" class="btn btn-accent btn-sm">
+                        Fill Checklist
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5" class="text-center text-gray-500 py-4">
+                    No checklists assigned to you today.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

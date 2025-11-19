@@ -1,0 +1,78 @@
+{% extends "accounts/nav_bar.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- AG Grid Styles + Script -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+
+<div class="max-w-6xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-xl">
+
+    <h2 class="text-3xl font-bold mb-4">
+        {{ instance.checklist.title }} — {{ instance.date }}
+        {% if locked %}
+            <span class="text-red-500">(Locked)</span>
+        {% endif %}
+    </h2>
+
+    <div id="myGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
+</div>
+
+
+<script>
+    /* ---------- SAFE JSON FROM DJANGO ---------- */
+    const columnDefs = {{ column_defs_json|safe }};
+    const rowData = {{ row_data_json|safe }};
+    const locked = {{ locked|yesno:"true,false" }} === "true";
+    const responseId = "{{ response_id }}";
+
+    /* ---------- INTERNAL HIDDEN ID COLUMN ---------- */
+    columnDefs.unshift({
+        field: "item_id",
+        hide: true,
+        editable: false
+    });
+
+    /* ---------- AG GRID OPTIONS (New API) ---------- */
+    const gridOptions = {
+        columnDefs: columnDefs,
+        rowData: rowData,
+
+        defaultColDef: {
+            resizable: true,
+            sortable: true,
+            filter: true,
+            editable: !locked,   // lock entire grid if needed
+        },
+
+        // SAVE when a user edits a cell
+        onCellValueChanged(event) {
+            if (locked) return;
+
+            const field = event.colDef.field;
+            if (field === "item_id" || field === "item_name") return;
+
+            fetch("{% url 'api_save_field' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    response_id: responseId,
+                    item_id: event.data.item_id,
+                    field: field,
+                    value: event.newValue
+                })
+            });
+        }
+    };
+
+    /* ---------- NEW AG GRID INITIALISATION ---------- */
+    const gridDiv = document.getElementById("myGrid");
+    agGrid.createGrid(gridDiv, gridOptions);
+</script>
+
+{% endblock %}

@@ -4,9 +4,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
 from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
-from .models import Deli, User, Checklist
+from datetime import date
+from .models import Deli, User, Checklist, ChecklistInstance, ChecklistInstanceItem, ChecklistResponse, ResponseItem, TemplateField
 from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse
+from django.utils.timezone import now, localdate
+import json
+
 
 # Handles the login process
 # I made this function to handle logging users into the system using their email and password.
@@ -256,3 +260,178 @@ def manager_checklists_combined(request):
     return render(request, "accounts/manager_checklists_combined.html", {
         "checklists": checklists,
     })
+
+
+@login_required
+def staff_view_checklists(request):
+    # Only staff should access this
+    if request.user.role != "staff":
+        return redirect("dashboard")
+
+    # All delis assigned to this user
+    delis = request.user.delis.all()
+
+    today = date.today()
+
+    # All checklists assigned to user's delis
+    checklists = Checklist.objects.filter(
+        deli__in=delis,
+        is_active=True
+    )
+
+    instances = []
+
+    for checklist in checklists:
+        # Check if a daily instance already exists
+        instance, created = ChecklistInstance.objects.get_or_create(
+            checklist=checklist,
+            deli=checklist.deli,
+            date=today,
+            defaults={"is_locked": False}
+        )
+
+        # If created today → generate rows (ChecklistInstanceItem)
+        if created:
+            for item in checklist.items.all():
+                ChecklistInstanceItem.objects.create(
+                    instance=instance,
+                    checklist_item=item
+                )
+
+        instances.append(instance)
+
+    return render(request, "accounts/staff_checklists.html", {
+        "instances": instances,
+        "today": today
+    })
+
+
+@login_required
+def fill_checklist_view(request, instance_id):
+    instance = get_object_or_404(ChecklistInstance, pk=instance_id)
+
+    # Ensure user belongs to this deli
+    if instance.deli not in request.user.delis.all():
+        return redirect("dashboard")
+
+    locked = instance.is_locked
+
+    # --- 1️⃣ GET OR CREATE RESPONSE ---
+    # Fix: You cannot filter by completed_at__date inside get_or_create
+    response_qs = ChecklistResponse.objects.filter(
+        checklist=instance.checklist,
+        deli=instance.deli,
+        completed_by=request.user,
+    )
+
+    # Daily checklists: use today's response
+    if instance.checklist.frequency == "daily":
+        response_qs = response_qs.filter(completed_at__date=localdate())
+
+    response = response_qs.first()
+    if not response:
+        response = ChecklistResponse.objects.create(
+            checklist=instance.checklist,
+            deli=instance.deli,
+            completed_by=request.user
+        )
+
+    # --- 2️⃣ BUILD GRID DATA ---
+    fields = instance.checklist.template.fields.order_by("order")
+    items = instance.checklist.items.order_by("order")
+
+    row_data = []
+    for item in items:
+        row = {
+            "item_id": item.id,
+            "item_name": item.name,
+        }
+
+        for field in fields:
+            answer, _ = ResponseItem.objects.get_or_create(
+                response=response,
+                checklist_item=item,
+                template_field=field
+            )
+
+            # push value into JSON table
+            value = None
+            if field.field_type == "text":
+                value = answer.answer_text
+            elif field.field_type == "date":
+                value = answer.answer_date.isoformat() if answer.answer_date else ""
+            elif field.field_type == "datetime":
+                value = answer.answer_datetime.isoformat() if answer.answer_datetime else ""
+            elif field.field_type == "decimal":
+                value = float(answer.answer_decimal) if answer.answer_decimal else ""
+            elif field.field_type == "number":
+                value = answer.answer_number if answer.answer_number is not None else ""
+            elif field.field_type == "boolean":
+                value = bool(answer.answer_boolean)
+
+            row[field.name] = value
+
+        row_data.append(row)
+
+    # --- 3️⃣ COLUMN DEFINITIONS ---
+    col_defs = [{
+        "headerName": "Item",
+        "field": "item_name",
+        "editable": False,
+    }]
+
+    for field in fields:
+        col_defs.append({
+            "headerName": field.label,
+            "field": field.name,
+            "editable": not locked,
+        })
+
+    # --- 4️⃣ RETURN JSON SAFELY TO TEMPLATE ---
+    return render(request, "accounts/fill_checklist.html", {
+        "instance": instance,
+        "column_defs_json": json.dumps(col_defs),
+        "row_data_json": json.dumps(row_data),
+        "locked": locked,
+        "response_id": response.id,
+    })
+
+
+@login_required
+def api_save_field(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    response_id = request.POST.get("response_id")
+    item_id = request.POST.get("item_id")
+    field_name = request.POST.get("field")
+    value = request.POST.get("value")
+
+    response = get_object_or_404(ChecklistResponse, id=response_id)
+    item = get_object_or_404(ChecklistItem, id=item_id)
+    template_field = get_object_or_404(TemplateField, name=field_name)
+
+    # Look up row
+    answer = ResponseItem.objects.get(
+        response=response,
+        checklist_item=item,
+        template_field=template_field
+    )
+
+    # Save based on field type
+    if template_field.field_type == "text":
+        answer.answer_text = value
+    elif template_field.field_type == "date":
+        answer.answer_date = value or None
+    elif template_field.field_type == "datetime":
+        answer.answer_datetime = value or None
+    elif template_field.field_type == "decimal":
+        answer.answer_decimal = value or None
+    elif template_field.field_type == "number":
+        answer.answer_number = int(value) if value else None
+    elif template_field.field_type == "boolean":
+        answer.answer_boolean = (value.lower() == "true")
+
+    answer.save()
+
+    return JsonResponse({"success": True})

@@ -140,13 +140,6 @@ class Checklist(models.Model):
 
 
 class ChecklistItem(models.Model):
-    """
-    Manager-defined rows/items inside a checklist.
-    Example:
-        For Food Safety:
-            - “Chicken Fillet Tray 1”
-            - “Lasagne Batch (12:00)”
-    """
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="items")
     name = models.CharField(max_length=255)
     order = models.PositiveIntegerField(default=0)
@@ -155,11 +148,7 @@ class ChecklistItem(models.Model):
         return f"{self.name} ({self.checklist})"
 
 
-
 class ChecklistResponse(models.Model):
-    """
-    A response session representing a staff member completing a checklist.
-    """
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="responses")
     deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
     completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="checklist_responses")
@@ -169,20 +158,29 @@ class ChecklistResponse(models.Model):
         return f"Response to {self.checklist} by {self.completed_by.email}"
 
 
-
 class ResponseItem(models.Model):
     """
-    Stores a SINGLE ANSWER to a SINGLE TEMPLATE FIELD for a SINGLE CHECKLIST ITEM.
-
-    Example for Food Safety:
-        ChecklistItem = “Chicken Fillet Tray 1”
-        TemplateField = “Core Temperature”
-        Answer = 75.5
+    Stores a SINGLE answer to a SINGLE template field for a SINGLE checklist item,
+    belonging to ONE checklist response session.
     """
 
-    response = models.ForeignKey(ChecklistResponse, on_delete=models.CASCADE, related_name="answers")
-    checklist_item = models.ForeignKey(ChecklistItem, on_delete=models.CASCADE, related_name="responses")
-    template_field = models.ForeignKey(TemplateField, on_delete=models.PROTECT, related_name="responses")
+    response = models.ForeignKey(
+        'ChecklistResponse',
+        on_delete=models.CASCADE,
+        related_name="answers",
+    )
+
+    checklist_item = models.ForeignKey(
+        ChecklistItem,
+        on_delete=models.CASCADE,
+        related_name="responses"
+    )
+
+    template_field = models.ForeignKey(
+        TemplateField,
+        on_delete=models.PROTECT,
+        related_name="responses"
+    )
 
     # Universal answer system:
     answer_text = models.TextField(null=True, blank=True)
@@ -193,4 +191,36 @@ class ResponseItem(models.Model):
     answer_boolean = models.BooleanField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.checklist_item.name} - {self.template_field.label}"
+        return f"{self.checklist_item} — {self.template_field.label}"
+
+
+
+class ChecklistInstance(models.Model):
+    checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="instances")
+    deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
+    date = models.DateField()  # The day this instance is for
+    is_locked = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('checklist', 'deli', 'date')  # Prevent duplicates
+
+    def __str__(self):
+        return f"{self.checklist.title} — {self.deli} — {self.date}"
+    
+
+
+class ChecklistInstanceItem(models.Model):
+    instance = models.ForeignKey(
+        ChecklistInstance, on_delete=models.CASCADE, related_name="items"
+    )
+    checklist_item = models.ForeignKey(
+        ChecklistItem, on_delete=models.CASCADE
+    )
+    # One per template field — answered by staff
+    # Will be filled by ResponseItem
+
+    def __str__(self):
+        return f"{self.instance} — {self.checklist_item}"
+
+
