@@ -1,171 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- I added this to define the page as HTML5 and set it to English -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Staff Dashboard | Digi HACCP</title>
+{% extends "accounts/nav_bar.html" %}
 
-  <!-- I used DaisyUI here again because it gives me access to ready-made buttons and Tailwind styling -->
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+{% block title %}Staff Dashboard | Digi HACCP{% endblock %}
 
-  <!-- I used the same Google Poppins font to keep my design consistent with the other pages -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+{% block extra_head %}
+<style>
+  .dashboard-container {
+    max-width: 850px;
+    margin: 70px auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    padding: 50px;
+    text-align: center;
+    animation: fadeIn 0.6s ease-out;
+  }
 
-  <style>
-    /* I styled the body with a green gradient and used flexbox to keep everything in place */
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+  h2 {
+    color: #333;
+    font-weight: 700;
+    font-size: 26px;
+    margin-bottom: 10px;
+  }
 
-    /* This is the navigation bar at the top of the page */
-    .navbar {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(8px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 40px;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+  .user-info {
+    color: #555;
+    margin-top: 10px;
+    font-size: 16px;
+    line-height: 1.6;
+  }
 
-    /* I made the Digi HACCP title bold and added a bit of shadow for style */
-    .navbar h1 {
-      font-size: 26px;
-      font-weight: 800;
-      margin: 0;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    }
+  .role-badge {
+    display: inline-block;
+    background: #17a2b8;
+    color: white;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
 
-    /* This section holds the main dashboard content in the middle of the page */
+  .deli-info {
+    background: #f8f8f8;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 25px auto;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .deli-info h3 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .deli-info p {
+    color: #666;
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .btn-group {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  footer {
+    text-align: center;
+    color: white;
+    font-size: 13px;
+    margin-top: 30px;
+    padding: 20px 0;
+    opacity: 0.9;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
     .dashboard-container {
-      max-width: 850px;
-      margin: 70px auto;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      padding: 50px;
-      text-align: center;
-      animation: fadeIn 0.6s ease-out;
+      padding: 30px 20px;
+      margin: 40px 15px;
     }
+  }
+</style>
+{% endblock %}
 
-    /* I styled the headings to make them stand out */
-    h2 {
-      color: #333;
-      font-weight: 700;
-      font-size: 26px;
-      margin-bottom: 10px;
-    }
-
-    /* This part shows the user’s email and role for now */
-    .user-info {
-      color: #555;
-      margin-top: 10px;
-      font-size: 16px;
-      line-height: 1.6;
-    }
-
-    /* The role badge shows what type of user is logged in (like staff or manager) Reference: https://www.w3schools.com/howto/howto_css_badge.asp */
-    .role-badge {
-      display: inline-block;
-      background: #17a2b8;
-      color: white;
-      padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      text-transform: capitalize;
-    }
-
-    /* This box shows which deli locations are assigned to the staff member */
-    .deli-info {
-      background: #f8f8f8;
-      border-radius: 12px;
-      padding: 20px;
-      margin: 25px auto;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
-    }
-
-    /* The deli section heading */
-    .deli-info h3 {
-      color: #333;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    /* The deli names are displayed as a list */
-    .deli-info p {
-      color: #666;
-      font-size: 15px;
-      margin: 0;
-    }
-
-    /* The buttons section lets the user perform quick actions like view reports or record data. They do not have any functions yet */
-    .btn-group {
-      margin-top: 25px;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-
-    /* This is the footer that stays at the bottom with the project name */
-    footer {
-      text-align: center;
-      color: white;
-      font-size: 13px;
-      margin-top: auto;
-      padding: 20px 0;
-      opacity: 0.9;
-    }
-
-    /* I added a fade-in animation for a smoother appearance when the page loads */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* This makes sure everything still looks good on smaller screens like phones. Reference:https://stackoverflow.com/questions/65363172/how-can-i-make-my-website-look-better-on-mobile */
-    @media (max-width: 768px) {
-      .dashboard-container {
-        padding: 30px 20px;
-        margin: 40px 15px;
-      }
-
-      .navbar {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- This is my navigation bar with the Digi HACCP title and logout button -->
-  <div class="navbar">
-    <h1>Digi HACCP</h1>
-    <!-- I added a logout form so users can easily log out of their account -->
-    <form action="{% url 'logout' %}" method="get" style="margin: 0;">
-      <button class="btn btn-error btn-sm">Logout</button>
-    </form>
-  </div>
-
-  <!-- This is the main content area where the staff information and actions appear -->
+{% block content %}
   <div class="dashboard-container">
-    <!-- I used Django template tags to show the user’s email -->
     <h2>Welcome, {{ request.user.email }} 👋</h2>
 
-    <!-- This section shows the user’s role using a coloured badge -->
     <div class="user-info">
       <p>Your Role:
         <span class="role-badge">
@@ -174,16 +105,13 @@
       </p>
     </div>
 
-    <!-- This part shows which delis are assigned to the logged-in user -->
     <div class="deli-info">
       <h3>Assigned Deli Location(s)</h3>
-      <p>{{ request.user.delis.all|join:", "|default:"No deli assigned" }}</p>
+      <p>{{ request.user.delis.all|join:", " |default:"No deli assigned" }}</p>
     </div>
 
-    <!-- I added a short line to tell users what they can do on the dashboard. Just so the page looks professional -->
     <p>Use the options below to manage your HACCP tasks efficiently.</p>
 
-    <!-- These are action buttons (I plan to link them to other features later) -->
     <div class="btn-group">
       <a href="#" class="btn btn-primary px-8">View Reports</a>
       <a href="#" class="btn btn-success px-8">Record Data</a>
@@ -191,9 +119,7 @@
     </div>
   </div>
 
-  <!-- This is the footer that appears at the bottom of the page. For a professional touch -->
   <footer>
     <p>&copy; 2025 Digi HACCP | All rights reserved</p>
   </footer>
-</body>
-</html>
+{% endblock %}

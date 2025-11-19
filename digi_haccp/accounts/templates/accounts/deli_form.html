@@ -1,211 +1,165 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- I added this to declare my file as an HTML5 document and set it to English -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ title }} | Digi HACCP</title>
+{% extends "accounts/nav_bar.html" %}
 
-  <!-- I used DaisyUI because it comes with Tailwind CSS and has built-in button and form styles -->
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-  <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+{% block title %}{{ title }} | Digi HACCP{% endblock %}
 
-  <!-- I used the Poppins font again to keep the same look across all pages -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+{% block extra_head %}
+{% load widget_tweaks %}
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+<script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <style>
-    /* I gave the page a green gradient background and centered everything using flexbox */
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-    }
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    background: linear-gradient(135deg, #a8e063, #56ab2f);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
 
-    /* This is my top navigation bar, which appears on every manager page */
-    .navbar {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(8px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 40px;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+  .navbar {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
 
-    /* I made the Digi HACCP logo text bold and slightly larger */
-    .navbar h1 {
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    }
+  .navbar h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  }
 
-    /* These are the links to navigate between pages like Dashboard, Users, Delis, and Logout */
-    .navbar a {
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-      margin-left: 25px;
-      transition: 0.2s;
-    }
+  .navbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 25px;
+    transition: 0.2s;
+  }
 
-    .navbar a:hover {
-      color: #e6ffcc;
-    }
+  .navbar a:hover {
+    color: #e6ffcc;
+  }
 
-    /* I used flexbox here to center my form card in the middle of the screen */
-    main {
-      flex-grow: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 60px 20px;
-    }
+  main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+  }
 
-    /* This is the white card that holds the form */
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 600px;
-      animation: fadeIn 0.7s ease-out;
-    }
+  .card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 600px;
+    animation: fadeIn 0.7s ease-out;
+  }
 
-    /* The main body of the card where I placed the form fields */
+  .card-body {
+    padding: 40px;
+  }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .form-control {
+    margin-bottom: 20px;
+  }
+
+  .label-text {
+    font-weight: 600;
+    color: #444;
+  }
+
+  input.input-bordered {
+    border-radius: 8px;
+    border-color: #ccc;
+  }
+
+  input.input-bordered:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+  }
+
+  .btn {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
     .card-body {
-      padding: 40px;
+      padding: 25px;
     }
-
-    /* I styled my title text to be bold and centered */
-    h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #333;
-      text-align: center;
-      margin-bottom: 25px;
+    .navbar {
+      flex-direction: column;
+      gap: 10px;
+      padding: 15px;
     }
+  }
+</style>
+{% endblock %}
 
-    /* Each form field is wrapped in a form-control class to keep spacing even */
-    .form-control {
-      margin-bottom: 20px;
-    }
+{% block content %}
+<main>
+  <div class="card">
+    <div class="card-body">
+      <h2>{{ title }}</h2>
 
-    /* Labels are slightly darker and bolder to stand out */
-    .label-text {
-      font-weight: 600;
-      color: #444;
-    }
+      <form method="POST" class="space-y-5">
+        {% csrf_token %}
 
-    /* I styled my input boxes with rounded corners and a soft green glow when focused */
-    input.input-bordered {
-      border-radius: 8px;
-      border-color: #ccc;
-    }
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Deli Name</span>
+          </label>
+          {{ form.deli_name|add_class:"input input-bordered w-full" }}
+        </div>
 
-    input.input-bordered:focus {
-      border-color: #22c55e;
-      box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
-    }
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Address</span>
+          </label>
+          {{ form.address|add_class:"input input-bordered w-full" }}
+        </div>
 
-    /* The buttons have a hover animation that makes them pop slightly. Gives the users some feedback. */
-    .btn {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Phone Number</span>
+          </label>
+          {{ form.phone_number|add_class:"input input-bordered w-full" }}
+        </div>
 
-    .btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-    }
-
-    /* I added a fade-in animation for a smooth appearance when the card loads Reference:https://stackoverflow.com/questions/11660710/css-transition-fade-in */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* I made sure everything still looks good on smaller screens like tablets and phones */
-    @media (max-width: 768px) {
-      .card-body {
-        padding: 25px;
-      }
-      .navbar {
-        flex-direction: column;
-        gap: 10px;
-        padding: 15px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  {% load widget_tweaks %} <!-- I loaded Django’s widget_tweaks to help me style form fields. Reference:https://pypi.org/project/django-widget-tweaks/ -->
-
-  <!-- This is my top navbar that helps me navigate between pages -->
-  <nav class="navbar">
-    <h1>Digi HACCP</h1>
-    <div>
-      <a href="{% url 'manager_dashboard' %}">Dashboard</a>
-      <a href="{% url 'manage_users' %}">Manage Users</a>
-      <a href="{% url 'manage_delis' %}">Manage Delis</a>
-      <a href="{% url 'logout' %}">Logout</a>
+        <div class="mt-6 flex flex-col gap-3">
+          <button type="submit" class="btn btn-success w-full">Save</button>
+          <a href="{% url 'manage_delis' %}" class="btn btn-outline btn-info w-full">← Back to List</a>
+        </div>
+      </form>
     </div>
-  </nav>
-
-  <!-- This is the main section that holds the deli form -->
-  <main>
-    <div class="card">
-      <div class="card-body">
-        <!-- I used {{ title }} so the same file can be reused for both adding and editing delis -->
-        <h2>{{ title }}</h2>
-
-        <!-- I used a Django form here with the POST method to send the data safely -->
-        <form method="POST" class="space-y-5">
-          {% csrf_token %} <!-- CSRF token protects against cross-site request forgery attacks. Reference:https://www.geeksforgeeks.org/python/csrf-token-in-django/ -->
-
-          <!-- Input for Deli Name -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text">Deli Name</span>
-            </label>
-            <!-- I used widget_tweaks to add Tailwind classes to my form input -->
-            {{ form.deli_name|add_class:"input input-bordered w-full" }}
-          </div>
-
-          <!-- Input for Address -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text">Address</span>
-            </label>
-            {{ form.address|add_class:"input input-bordered w-full" }}
-          </div>
-
-          <!-- Input for Phone Number -->
-          <div class="form-control">
-            <label class="label">
-              <span class="label-text">Phone Number</span>
-            </label>
-            {{ form.phone_number|add_class:"input input-bordered w-full" }}
-          </div>
-
-          <!-- The Save and Back buttons -->
-          <div class="mt-6 flex flex-col gap-3">
-            <button type="submit" class="btn btn-success w-full">
-              Save
-            </button>
-            <a href="{% url 'manage_delis' %}" class="btn btn-outline btn-info w-full">
-              ← Back to List
-            </a>
-          </div>
-        </form>
-      </div>
-    </div>
-  </main>
-</body>
-</html>
+  </div>
+</main>
+{% endblock %}

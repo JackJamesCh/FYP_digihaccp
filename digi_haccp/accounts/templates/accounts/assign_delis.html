@@ -1,218 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <!-- I added this to tell the browser that the page is written in HTML5 and it’s in English -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assign Delis | Digi HACCP</title>
+{% extends "accounts/nav_bar.html" %}
 
-  <!-- I used the Poppins font again to keep the same look and style across my pages -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+{% block title %}Assign Delis | Digi HACCP{% endblock %}
 
-  <style>
-    /* I styled the whole page with a green gradient background and made sure everything fits the screen nicely */
-    body {
-      font-family: "Poppins", sans-serif;
-      background: linear-gradient(135deg, #a8e063, #56ab2f);
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
+{% block extra_head %}
+<style>
+  main {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 600px;
+    padding: 40px;
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  h2 {
+    text-align: center;
+    font-size: 26px;
+    color: #333;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+
+  label {
+    display: block;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+  }
+
+  select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    appearance: none;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  select:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 10px;
+  }
+
+  button, a.button-link {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.25s ease;
+  }
+
+  button {
+    background-color: #2e7d32;
+    color: white;
+  }
+
+  button:hover {
+    background-color: #256628;
+    transform: scale(1.03);
+  }
+
+  a.button-link {
+    background-color: white;
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+    text-decoration: none;
+  }
+
+  a.button-link:hover {
+    background-color: #e8f5e9;
+    transform: scale(1.03);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .card {
+      padding: 25px;
+    }
+    .button-group {
       flex-direction: column;
     }
+  }
+</style>
+{% endblock %}
 
-    /* This is the navigation bar at the top with a slight blur effect and white text */
-    .navbar {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(8px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 40px;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+{% block content %}
+<main>
+  <div class="card">
+    <h2>Assign Delis to {{ user.email }}</h2>
 
-    /* I made the title stand out with bigger text and a shadow */
-    .navbar h1 {
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0;
-      letter-spacing: 0.5px;
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    }
+    <form method="POST">
+      {% csrf_token %}
+      <label for="id_delis">Select one or more Delis</label>
+      {{ form.delis }}
 
-    /* These are the navigation links to move between manager pages */
-    .navbar a {
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-      margin-left: 25px;
-      transition: 0.2s;
-    }
-
-    .navbar a:hover {
-      color: #e6ffcc;
-    }
-
-    /* I centered the main card using flexbox and added the correct amount of padding for spacing */
-    main {
-      flex-grow: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 60px 20px;
-    }
-
-    /* This is the white card that holds the form content. Makes the page look cleanly laid out */
-    .card {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 600px;
-      padding: 40px;
-      animation: fadeIn 0.6s ease-out;
-    }
-
-    /* I styled the title inside the card */
-    h2 {
-      text-align: center;
-      font-size: 26px;
-      color: #333;
-      font-weight: 700;
-      margin-bottom: 25px;
-    }
-
-    /* Labels for form fields look a bit bolder for better visibility */
-    label {
-      display: block;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 8px;
-    }
-
-    /* I styled the dropdown menu where delis can be selected */
-    select {
-      width: 100%;
-      padding: 12px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      font-size: 15px;
-      color: #333;
-      outline: none;
-      appearance: none;
-      background-color: #fff;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    /* This adds a nice green glow when the dropdown is clicked */
-    select:focus {
-      border-color: #2e7d32;
-      box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
-    }
-
-    /* The buttons are side by side and have spacing between them */
-    .button-group {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 30px;
-      gap: 10px;
-    }
-
-    /* The save and back buttons share most of the same styling */
-    button, a.button-link {
-      flex: 1;
-      padding: 12px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.25s ease;
-    }
-
-    /* This is the green “Save” button */
-    button {
-      background-color: #2e7d32;
-      color: white;
-    }
-
-    button:hover {
-      background-color: #256628;
-      transform: scale(1.03);
-    }
-
-    /* This is the “Back” button that takes the user to Manage Users */
-    a.button-link {
-      background-color: white;
-      color: #2e7d32;
-      border: 2px solid #2e7d32;
-      text-decoration: none;
-    }
-
-    a.button-link:hover {
-      background-color: #e8f5e9;
-      transform: scale(1.03);
-    }
-
-    /* I added a small fade-in animation to make the card appear smoothly */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* From what I looked up in the internet this should help my website look better on mobile devices Reference:https://stackoverflow.com/questions/65363172/how-can-i-make-my-website-look-better-on-mobile */
-    @media (max-width: 768px) {
-      .navbar {
-        flex-direction: column;
-        gap: 10px;
-        padding: 15px;
-      }
-
-      .card {
-        padding: 25px;
-      }
-
-      .button-group {
-        flex-direction: column;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <!-- This is my navigation bar at the top of the page -->
-  <nav class="navbar">
-    <h1>Digi HACCP</h1>
-    <div>
-      <!-- I added these links so managers can move between different pages -->
-      <a href="{% url 'manager_dashboard' %}">Dashboard</a>
-      <a href="{% url 'manage_users' %}">Manage Users</a>
-      <a href="{% url 'manage_delis' %}">Manage Delis</a>
-      <a href="{% url 'logout' %}">Logout</a>
-    </div>
-  </nav>
-
-  <!-- This is the main section where the deli assignment form is -->
-  <main>
-    <div class="card">
-      <!-- This shows which user I’m assigning delis to -->
-      <h2>Assign Delis to {{ user.email }}</h2>
-
-      <!-- I used a Django form with POST to send the selected deli data securely -->
-      <form method="POST">
-        {% csrf_token %}
-        <label for="id_delis">Select one or more Delis</label>
-        {{ form.delis }}
-
-        <!-- These buttons let the manager save changes or go back -->
-        <div class="button-group">
-          <button type="submit">Save</button>
-          <a href="{% url 'manage_users' %}" class="button-link">← Back</a>
-        </div>
-      </form>
-    </div>
-  </main>
-</body>
-</html>
+      <div class="button-group">
+        <button type="submit">Save</button>
+        <a href="{% url 'manage_users' %}" class="button-link">← Back</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

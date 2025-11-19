@@ -19,4 +19,6 @@ urlpatterns = [
     path('assign-delis/<int:user_id>/', views.assign_delis_view, name='assign_delis'),
     path("checklists/create/", views.create_checklist, name="create_checklist"),
     path("checklists/success/", views.checklist_success, name="checklist_success"),
+    path("manager/checklists/", views.manager_checklists_combined, name="manager_checklists_combined"),
+    path("api/checklists/<int:pk>/", views.api_get_checklist_data, name="api_get_checklist_data"),
 ]

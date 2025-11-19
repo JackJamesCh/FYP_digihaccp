@@ -1,11 +1,12 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
 from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
-from .models import Deli, User
+from .models import Deli, User, Checklist
 from django.contrib.auth.decorators import user_passes_test
+from django.http import JsonResponse
 
 # Handles the login process
 # I made this function to handle logging users into the system using their email and password.
@@ -212,3 +213,46 @@ def create_checklist(request):
 
 def checklist_success(request):
     return render(request, "accounts/checklist_success.html")
+
+
+def api_get_checklist_data(request, pk):
+    checklist = get_object_or_404(Checklist, pk=pk)
+    template_fields = checklist.template.fields.order_by("order")
+    items = checklist.items.order_by("order")
+
+    column_defs = [{"headerName": "Item Name", "field": "item_name"}]
+
+    for field in template_fields:
+        column_defs.append({
+            "headerName": field.label,
+            "field": field.name,
+        })
+
+    row_data = []
+    for i in items:
+        row = {"item_name": i.name}
+        for field in template_fields:
+            row[field.name] = ""
+        row_data.append(row)
+
+    return JsonResponse({
+        "title": checklist.title,
+        "template": checklist.template.name,
+        "deli": checklist.deli.deli_name,
+        "frequency": checklist.frequency,
+        "columnDefs": column_defs,
+        "rowData": row_data
+    })
+
+
+@login_required
+def manager_checklists_combined(request):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    delis = request.user.delis.all()
+    checklists = Checklist.objects.filter(deli__in=delis).order_by("-created_at")
+
+    return render(request, "accounts/manager_checklists_combined.html", {
+        "checklists": checklists,
+    })

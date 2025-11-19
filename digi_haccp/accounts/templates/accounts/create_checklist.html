@@ -1,164 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Create Checklist | Digi HACCP</title>
+{% extends "accounts/nav_bar.html" %}
+{% load widget_tweaks %}
 
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-    <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
+{% block title %}Create Checklist | Digi HACCP{% endblock %}
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #a8e063, #56ab2f);
-            font-family: "Poppins", sans-serif;
-            margin: 0;
-            padding-bottom: 40px;
+{% block extra_head %}
+<!-- DaisyUI fieldset styling applies automatically -->
+<style>
+    body {
+        background: linear-gradient(135deg, #a8e063, #56ab2f);
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding-bottom: 40px;
+    }
+
+    .card-container {
+        max-width: 900px;
+        margin: 50px auto;
+        background: white;
+        padding: 40px 50px;
+        border-radius: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Title reveal animation */
+    @keyframes revealLeftToRight {
+        0% {
+            opacity: 0;
+            clip-path: inset(0 100% 0 0); /* hides everything except left edge */
+            transform: translateX(-15px);
         }
-
-        /* NavBar Styling */
-        .navbar {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(8px);
-            padding: 18px 40px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
+        60% {
+            opacity: 1;
         }
-
-        .navbar h1 {
-            font-size: 28px;
-            font-weight: 800;
-            margin: 0;
-            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+        100% {
+            clip-path: inset(0 0 0 0); /* reveal full title */
+            transform: translateX(0);
         }
+    }
 
-        .navbar a {
-            color: white;
-            margin-left: 25px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: 0.2s;
-        }
+    .animated-title {
+        animation: revealLeftToRight 1s ease-out forwards;
+    }
 
-        .navbar a:hover {
-            color: #e6ffcc;
-        }
+    h2 {
+        font-size: 32px;
+        font-weight: 800;
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+    }
 
-        .card-container {
-            max-width: 850px;
-            margin: 50px auto;
-            background: white;
-            padding: 50px 60px;
-            border-radius: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            animation: fadeIn 0.5s ease-out;
-        }
+    .fieldset {
+        margin-bottom: 20px;
+    }
 
-        h2 {
-            font-size: 32px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 25px;
-            color: #333;
-        }
+    .fieldset-legend {
+        font-size: 20px;
+        font-weight: 700;
+        padding: 0 8px;
+    }
 
-        label {
-            font-weight: 600;
-            color: #444;
-        }
+    label {
+        font-weight: 600;
+        margin-top: 10px;
+        display: block;
+    }
 
-        .input, .select, .textarea {
-            border-radius: 10px !important;
-            margin-top: 5px;
-        }
+    .btn-success {
+        border-radius: 12px;
+        font-size: 18px;
+        padding: 12px 0;
+    }
+</style>
+{% endblock %}
 
-        .section-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #333;
-        }
+{% block content %}
 
-        .subtext {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 8px;
-        }
+<div class="card-container">
+    <h2 class="animated-title">Create New Checklist</h2>
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
 
-        .btn-success {
-            border-radius: 12px;
-            font-size: 18px;
-            padding: 12px 0;
-        }
+        <!-- FIELDSET 1: DETAILS -->
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
+            <label>Checklist Template</label>
+            {{ form.template|add_class:"select select-bordered w-full" }}
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-</head>
+            <label>Deli</label>
+            {{ form.deli|add_class:"select select-bordered w-full" }}
 
-<body>
+            <label>Frequency</label>
+            {{ form.frequency|add_class:"select select-bordered w-full" }}
 
-    <!-- NAVBAR (Same as Manager Dashboard) -->
-    <nav class="navbar">
-        <h1>Digi HACCP</h1>
-        <div>
-            <a href="{% url 'manage_users' %}">Manage Users</a>
-            <a href="{% url 'manage_delis' %}">Manage Delis</a>
-            <a href="{% url 'logout' %}">Logout</a>
-        </div>
-    </nav>
+            <label>Checklist Title</label>
+            {{ form.title|add_class:"input input-bordered w-full" }}
+        </fieldset>
 
-    <!-- Create Checklist Card -->
-    <div class="card-container">
-        <h2>Create New Checklist</h2>
+        <!-- FIELDSET 2: ITEMS -->
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
+            <legend class="fieldset-legend">Checklist Items</legend>
 
-        <form method="POST">
-            {% csrf_token %}
+            <p class="text-sm text-gray-600 mb-2">
+                Paste your item names — <strong>one per line</strong>.
+            </p>
 
-            <!-- Checklist Details -->
-            <div class="mb-10">
-                <h3 class="section-title">Checklist Details</h3>
+            {{ form.items_bulk|add_class:"textarea textarea-bordered w-full min-h-[200px]" }}
+        </fieldset>
 
-                <div class="mb-5">
-                    <label>Checklist Template</label>
-                    {{ form.template }}
-                </div>
-
-                <div class="mb-5">
-                    <label>Deli</label>
-                    {{ form.deli }}
-                </div>
-
-                <div class="mb-5">
-                    <label>Frequency</label>
-                    {{ form.frequency }}
-                </div>
-
-                <div class="mb-5">
-                    <label>Checklist Title (optional)</label>
-                    {{ form.title }}
-                </div>
-            </div>
-
-            <!-- Bulk Item Entry -->
-            <div class="mb-10">
-                <h3 class="section-title">Checklist Items</h3>
-                <p class="subtext">
-                    Paste your item names — <strong>one per line</strong>.
-                </p>
-                {{ form.items_bulk }}
-            </div>
-
-            <!-- Submit -->
-            <button class="btn btn-success w-full text-white mt-4" type="submit">
+        <!-- BUTTONS -->
+        <div class="flex flex-col gap-3">
+            <button class="btn btn-success w-full text-white" type="submit">
                 Create Checklist
             </button>
-        </form>
-    </div>
 
-</body>
-</html>
+            <a href="{% url 'manager_checklists_combined' %}" class="btn btn-outline btn-info w-full">
+                Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "accounts/nav_bar.html" %}
+
+{% block title %}Checklists | Digi HACCP{% endblock %}
+
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+<script>document.documentElement.setAttribute('data-theme', 'pastel');</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+
+<style>
+  body {
+    background: linear-gradient(135deg, #a8e063, #56ab2f);
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding-bottom: 40px;
+  }
+
+  .navbar {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    padding: 18px 40px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    padding: 30px;
+    margin: 40px auto;
+    max-width: 1200px;
+  }
+
+  table {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  th, td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  th {
+    background: #f7f7f7;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="card">
+
+  <h2 class="text-3xl font-bold mb-6 text-center">Checklists</h2>
+
+  <div class="flex justify-end mb-4" style="padding-top: 10px; padding-bottom: 10px;">
+      <a href="{% url 'create_checklist' %}" 
+      class="btn btn-warning px-6 py-2 font-semibold">
+          + Create Checklist
+      </a>
+  </div>
+
+  <table>
+      <thead>
+          <tr>
+              <th>Title</th>
+              <th>Deli</th>
+              <th>Template</th>
+              <th>Frequency</th>
+              <th>Created</th>
+              <th>Select</th>
+          </tr>
+      </thead>
+
+      <tbody>
+          {% for c in checklists %}
+          <tr>
+              <td>{{ c.title }}</td>
+              <td>{{ c.deli.deli_name }}</td>
+              <td>{{ c.template.name }}</td>
+              <td>{{ c.frequency|title }}</td>
+              <td>{{ c.created_at|date:"d M Y, H:i" }}</td>
+              <td>
+                  <button onclick="loadChecklist({{ c.id }})"
+                          class="btn btn-accent btn-sm">View</button>
+              </td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+
+  <hr class="my-6">
+
+  <h3 id="detailTitle" class="text-xl font-bold mb-4"></h3>
+
+  <div id="myGrid" class="ag-theme-alpine" style="height: 500px; width: 100%;"></div>
+
+</div>
+
+<script>
+function loadChecklist(id) {
+    fetch(`/api/checklists/${id}/`)
+    .then(res => res.json())
+    .then(data => {
+
+        document.getElementById("detailTitle").innerText =
+            `${data.title} — ${data.deli} (${data.template})`;
+
+        document.getElementById("myGrid").innerHTML = "";
+
+        agGrid.createGrid(document.getElementById("myGrid"), {
+            columnDefs: data.columnDefs,
+            rowData: data.rowData,
+            pagination: true,
+            paginationPageSize: 20,
+            defaultColDef: {
+                sortable: true,
+                filter: true,
+                resizable: true
+            }
+        });
+    });
+}
+</script>
+
+{% endblock %}
