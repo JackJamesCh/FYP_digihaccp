@@ -24,4 +24,7 @@ urlpatterns = [
     path("staff/checklists/", views.staff_view_checklists, name="staff_checklists"),
     path("checklist/fill/<int:instance_id>/", views.fill_checklist_view, name="fill_checklist"),
     path("api/checklist/save/", views.api_save_field, name="api_save_field"),
+    path("manager/deli/<int:deli_id>/checklists/", views.deli_checklist_history, name="deli_checklist_history"),
+    path("manager/checklist/instance/<int:instance_id>/data/", views.api_manager_instance_detail, name="api_manager_instance_detail"),
+
 ]

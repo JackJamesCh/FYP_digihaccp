@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
+    /* Default body styling */
     body {
       font-family: "Poppins", sans-serif;
       background: linear-gradient(135deg, #a8e063, #56ab2f);
@@ -54,31 +55,42 @@
     }
   </style>
 
+  <!-- Allow pages to add their own head content -->
   {% block extra_head %}{% endblock %}
+  
+  <!-- Allow pages to override body style OUTSIDE the CSS block -->
+  {% block body_style %}{% endblock %}
+  
 </head>
 
 <body>
-  <!-- NAVBAR used by ALL pages -->
-  <nav class="navbar">
-  <h1>Digi HACCP</h1>
-  <div>
-    {% if request.user.is_authenticated %}
-      {% if request.user.role == "manager" %}
-        
-        {% if request.path == '/manager-dashboard/' %}
-          <!-- On dashboard: do not show Dashboard link -->
-        {% else %}
-          <a href="{% url 'manager_dashboard' %}">Dashboard</a>
+
+  <!-- NAVBAR -->
+ <!-- NAVBAR -->
+<nav class="navbar">
+    <h1>Digi HACCP</h1>
+    <div>
+        {% if request.user.is_authenticated %}
+
+            {% if request.user.role == "manager" %}
+                {% if request.path != '/manager-dashboard/' %}
+                    <a href="{% url 'manager_dashboard' %}">Dashboard</a>
+                {% endif %}
+            {% endif %}
+
+            {% if request.user.role == "staff" %}
+                {% if request.path != '/dashboard/' %}
+                    <a href="{% url 'dashboard' %}">Dashboard</a>
+                {% endif %}
+            {% endif %}
+
+            <a href="{% url 'logout' %}" class="btn btn-error btn-sm">Logout</a>
         {% endif %}
-      
-      {% endif %}
-      
-      <a href="{% url 'logout' %}" class="btn btn-error btn-sm">Logout</a>
-    {% endif %}
-  </div>
+    </div>
 </nav>
 
 
   {% block content %}{% endblock %}
+
 </body>
 </html>

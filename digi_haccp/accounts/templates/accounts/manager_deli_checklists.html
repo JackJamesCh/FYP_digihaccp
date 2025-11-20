@@ -1,0 +1,198 @@
+{% extends "accounts/nav_bar.html" %}
+{% load static %}
+
+{% block body_style %}
+<style>
+    body {
+        background: linear-gradient(to bottom right, #a8e063, #56ab2f);
+        font-family: "Poppins", sans-serif;
+        animation: fadeIn 0.6s ease-out;
+        min-height: 100vh;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-card {
+    max-width: 1600px;        /* ⬅ wider than before */
+    width: 95%;               /* ⬅ responsive width that fills screen */
+    margin: 60px auto;
+    background: white;
+    padding: 50px;            /* slightly increased padding for balance */
+    border-radius: 28px;
+    box-shadow: 0 22px 55px rgba(0,0,0,0.10);
+    animation: fadeIn 0.8s ease-out;
+    }
+
+    .page-title {
+        font-size: 34px;
+        font-weight: 800;
+        color: #266b30;
+        margin-bottom: 25px;
+    }
+
+    /* Table styling */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    thead {
+        background: #e8f6e8;
+        color: #266b30;
+        text-transform: uppercase;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+    }
+
+    thead th {
+        padding: 14px;
+        font-weight: 700;
+        border-bottom: 2px solid #d6ead6;
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #eee;
+        background: #fff;
+        transition: 0.2s ease-in-out;
+    }
+
+    tbody tr:hover {
+        background: #f5fcf5;
+        transform: scale(1.01);
+    }
+
+    td {
+        padding: 14px;
+        font-size: 16px;
+        color: #333;
+    }
+
+    /* View Button */
+    .btn-view {
+        background: #74c686;
+        border: none;
+        color: white;
+        padding: 8px 18px;
+        font-size: 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: 0.15s;
+    }
+
+    .btn-view:hover {
+        background: #62b273;
+        transform: translateY(-2px);
+    }
+
+    /* Detail header */
+    #detailHeader {
+        margin-top: 35px;
+        font-size: 22px;
+        font-weight: 700;
+        color: #266b30;
+    }
+
+    /* AG Grid styling container */
+    #detailGrid {
+        margin-top: 15px;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+
+<div class="page-card">
+
+    <!-- PAGE TITLE -->
+    <h2 class="page-title">
+        Checklist History — {{ deli.deli_name }}
+    </h2>
+
+    <!-- SUMMARY TABLE -->
+    <table>
+        <thead>
+            <tr>
+                <th>Checklist</th>
+                <th>Date</th>
+                <th>Locked?</th>
+                <th>Open</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for instance in instances %}
+            <tr>
+                <td>{{ instance.checklist.title }}</td>
+                <td>{{ instance.date }}</td>
+                <td>{% if instance.is_locked %}Yes{% else %}No{% endif %}</td>
+                <td>
+                    <button 
+                        class="btn-view"
+                        onclick="loadInstance({{ instance.id }})">
+                        View
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- DETAIL HEADER -->
+    <h3 id="detailHeader"></h3>
+
+    <!-- AG GRID DETAIL TABLE -->
+    <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
+
+</div>
+
+<script>
+
+let detailGrid = null;
+
+function loadInstance(instanceId) {
+    fetch(`/manager/checklist/instance/${instanceId}/data/`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (!data.columnDefs || data.columnDefs.length === 0) {
+                document.getElementById("detailHeader").innerText =
+                    "No responses recorded.";
+                document.getElementById("detailGrid").innerHTML = "";
+                return;
+            }
+
+            // Header text
+            document.getElementById("detailHeader").innerText =
+                `Filled by ${data.filled_by} — ${data.filled_time}`;
+
+            // Reset grid content
+            const gridDiv = document.getElementById("detailGrid");
+            gridDiv.innerHTML = "";
+
+            // Create grid (AG Grid V32+)
+            detailGrid = agGrid.createGrid(gridDiv, {
+                columnDefs: data.columnDefs,
+                rowData: data.rowData,
+                defaultColDef: {
+                    resizable: true,
+                    sortable: true,
+                    filter: true
+                },
+                animateRows: true
+            });
+        });
+}
+</script>
+
+{% endblock %}

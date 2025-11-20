@@ -176,7 +176,12 @@
                 <div class="flex flex-wrap gap-2">
                   <a href="{% url 'edit_deli' deli.deli_ID %}" class="btn btn-primary btn-sm">Edit</a>
                   <a href="{% url 'delete_deli' deli.deli_ID %}" class="btn btn-error btn-sm"
-                     onclick="return confirm('Delete this deli?');">Delete</a>
+                     onclick="return confirm('Delete this deli?');">Delete
+                  </a>
+                  <a href="{% url 'deli_checklist_history' deli.deli_ID %}"
+                      class="btn btn-accent btn-sm">
+                      View Checklists
+                    </a>
                 </div>
               </td>
             </tr>

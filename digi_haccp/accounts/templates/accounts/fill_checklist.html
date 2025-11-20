@@ -1,56 +1,172 @@
 {% extends "accounts/nav_bar.html" %}
 {% load static %}
 
+{% block body_style %}
+<style>
+    body {
+        background: linear-gradient(to bottom right, #a8e063, #56ab2f);
+        animation: fadeIn 0.6s ease-out;
+        min-height: 100vh;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floatIn {
+        from { opacity: 0; transform: translateY(20px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* WIDER PAGE */
+    .page-wrapper {
+        padding: 0 20px;
+        animation: floatIn 0.7s ease-out;
+    }
+
+    .header-block { margin-bottom: 100px; }
+
+    .sub-label {
+        font-size: 13px;
+        color: #eaf7e8;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+    .page-title {
+        font-size: 48px;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+
+    .date-row { display: flex; gap: 12px; }
+    .date-pill {
+        background: rgba(255,255,255,0.25);
+        padding: 6px 14px;
+        border-radius: 14px;
+        color: #234722;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    /* WIDER, less tall CARD */
+    .form-card {
+        background: white;
+        padding: 50px 50px;     /* reduced height padding */
+        border-radius: 40px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.10);
+        border: 1px solid #d8d8d8;
+        margin-top: 40px;
+    }
+
+    .divider-line {
+        height: 3px;
+        background: linear-gradient(to right, #b5ddb5, transparent);
+        margin: 40px 0;
+        border-radius: 10px;
+    }
+
+    .instructions {
+        color: #4b4b4b;
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* AG GRID (smaller height) */
+    #myGrid {
+        height: 600px !important;   /* was 900 */
+        border-radius: 20px;
+        box-shadow: 0 20px 45px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .ag-theme-alpine {
+        --ag-row-height: 44px;
+        --ag-header-height: 50px;
+        --ag-font-size: 17px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<!-- AG Grid Styles + Script -->
+<div class="page-wrapper">
+
+    <!-- Header Section -->
+    <div class="header-block">
+    <br>
+        <p class="sub-label">Checklist Entry</p>
+
+        <h1 class="page-title">{{ instance.checklist.title }}</h1>
+
+        <div class="date-row">
+            <span class="date-pill">{{ instance.date }}</span>
+
+            {% if locked %}
+                <span class="status-badge bg-red-100 text-red-700">Locked</span>
+            {% else %}
+                <span class="status-badge bg-green-100 text-green-700">Editable</span>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <!-- Main Card -->
+    <div class="form-card">
+
+        <p class="instructions">
+            Please fill in each required field. All changes save automatically.
+        </p>
+
+        <div class="divider-line"></div>
+
+        <div id="myGrid"
+            class="ag-theme-alpine w-full"
+            style="height: 650px;">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- AG GRID -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
-<div class="max-w-6xl mx-auto mt-10 bg-white p-6 rounded-xl shadow-xl">
-
-    <h2 class="text-3xl font-bold mb-4">
-        {{ instance.checklist.title }} — {{ instance.date }}
-        {% if locked %}
-            <span class="text-red-500">(Locked)</span>
-        {% endif %}
-    </h2>
-
-    <div id="myGrid" class="ag-theme-alpine" style="height: 600px; width: 100%;"></div>
-</div>
-
-
 <script>
-    /* ---------- SAFE JSON FROM DJANGO ---------- */
     const columnDefs = {{ column_defs_json|safe }};
     const rowData = {{ row_data_json|safe }};
     const locked = {{ locked|yesno:"true,false" }} === "true";
     const responseId = "{{ response_id }}";
 
-    /* ---------- INTERNAL HIDDEN ID COLUMN ---------- */
-    columnDefs.unshift({
-        field: "item_id",
-        hide: true,
-        editable: false
-    });
+    /* Hidden backend-only ID column */
+    columnDefs.unshift({ field: "item_id", hide: true, editable: false });
 
-    /* ---------- AG GRID OPTIONS (New API) ---------- */
     const gridOptions = {
-        columnDefs: columnDefs,
-        rowData: rowData,
-
+        columnDefs,
+        rowData,
         defaultColDef: {
             resizable: true,
             sortable: true,
             filter: true,
-            editable: !locked,   // lock entire grid if needed
+            editable: !locked,
         },
+        animateRows: true,
+        rowSelection: "single",
 
-        // SAVE when a user edits a cell
         onCellValueChanged(event) {
             if (locked) return;
-
             const field = event.colDef.field;
             if (field === "item_id" || field === "item_name") return;
 
@@ -63,16 +179,14 @@
                 body: new URLSearchParams({
                     response_id: responseId,
                     item_id: event.data.item_id,
-                    field: field,
+                    field,
                     value: event.newValue
                 })
             });
         }
     };
 
-    /* ---------- NEW AG GRID INITIALISATION ---------- */
-    const gridDiv = document.getElementById("myGrid");
-    agGrid.createGrid(gridDiv, gridOptions);
+    agGrid.createGrid(document.getElementById("myGrid"), gridOptions);
 </script>
 
 {% endblock %}

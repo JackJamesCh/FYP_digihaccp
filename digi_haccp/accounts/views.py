@@ -435,3 +435,90 @@ def api_save_field(request):
     answer.save()
 
     return JsonResponse({"success": True})
+
+
+
+@login_required
+def deli_checklist_history(request, deli_id):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    deli = get_object_or_404(Deli, deli_ID=deli_id)
+
+    # Only allow managers assigned to this deli
+    if deli not in request.user.delis.all():
+        return redirect("manager_dashboard")
+
+    instances = ChecklistInstance.objects.filter(
+        deli=deli
+    ).order_by("-date", "-created_at")
+
+    return render(request, "accounts/manager_deli_checklists.html", {
+        "deli": deli,
+        "instances": instances
+    })
+
+
+@login_required
+def api_manager_instance_detail(request, instance_id):
+    instance = get_object_or_404(ChecklistInstance, id=instance_id)
+
+    # Collect fields & items
+    checklist = instance.checklist
+    fields = checklist.template.fields.order_by("order")
+    items = checklist.items.order_by("order")
+
+    # Find the staff response(s)
+    responses = ChecklistResponse.objects.filter(
+        checklist=checklist,
+        deli=instance.deli,
+        completed_at__date=instance.date
+    )
+
+    if not responses.exists():
+        return JsonResponse({"columnDefs": [], "rowData": []})
+
+    response = responses.first()
+
+    # Build row data
+    row_data = []
+    for item in items:
+        row = {
+            "item_name": item.name
+        }
+        for field in fields:
+            try:
+                answer = ResponseItem.objects.get(
+                    response=response,
+                    checklist_item=item,
+                    template_field=field
+                )
+                value = (
+                    answer.answer_text or
+                    answer.answer_date or
+                    answer.answer_datetime or
+                    answer.answer_decimal or
+                    answer.answer_number or
+                    answer.answer_boolean
+                )
+            except ResponseItem.DoesNotExist:
+                value = ""
+
+            row[field.name] = value
+        row_data.append(row)
+
+    # Build column defs
+    col_defs = [{"headerName": "Item", "field": "item_name"}]
+    for field in fields:
+        col_defs.append({
+            "headerName": field.label,
+            "field": field.name,
+            "editable": False,
+        })
+
+    return JsonResponse({
+        "columnDefs": col_defs,
+        "rowData": row_data,
+        "filled_by": response.completed_by.email,
+        "filled_time": response.completed_at.strftime("%d %b %Y, %H:%M")
+    })
