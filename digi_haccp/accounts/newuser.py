@@ -16,7 +16,7 @@ class SignUpForm(forms.ModelForm):
     # The Meta class tells Django which model this form is linked to
     class Meta:
         model = User  # connects the form to my custom User model
-        # use "delis" (ManyToManyField), no more "deli_id"
+        # use "delis" (ManyToManyField) no more "deli_id"
         fields = ["email", "role", "delis"]  # these fields come from the User model
         widgets = {
             "email": forms.EmailInput(attrs={"placeholder": "you@example.com"}),  # adds a placeholder for the email box

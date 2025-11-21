@@ -3,6 +3,10 @@
 
 {% block body_style %}
 <style>
+
+    /* (Page Background)
+       I used the same soft green gradient theme so the whole system feels consistent.
+       The fade-in animation makes the transition look smoother when the page loads. */
     body {
         background: linear-gradient(to bottom right, #a8e063, #56ab2f);
         font-family: "Poppins", sans-serif;
@@ -15,17 +19,21 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
+    /* (Main Page Card)
+       I made this card wider than my usual ones because this page needs more horizontal
+       space due to the tables and AG Grid. The rounded corners + shadow make it stand out. */
     .page-card {
-    max-width: 1600px;        /* ⬅ wider than before */
-    width: 95%;               /* ⬅ responsive width that fills screen */
-    margin: 60px auto;
-    background: white;
-    padding: 50px;            /* slightly increased padding for balance */
-    border-radius: 28px;
-    box-shadow: 0 22px 55px rgba(0,0,0,0.10);
-    animation: fadeIn 0.8s ease-out;
+        max-width: 1600px;   
+        width: 95%;          
+        margin: 60px auto;
+        background: white;
+        padding: 50px;
+        border-radius: 28px;
+        box-shadow: 0 22px 55px rgba(0,0,0,0.10);
+        animation: fadeIn 0.8s ease-out;
     }
 
+    /* (Main Page Title) */
     .page-title {
         font-size: 34px;
         font-weight: 800;
@@ -33,7 +41,10 @@
         margin-bottom: 25px;
     }
 
-    /* Table styling */
+    /* (Table Styling)
+       This table lists every instance of the checklist (one per day).
+       I used alternating row colors and subtle hover scaling to make
+       it feel more interactive and easy to read. */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -72,7 +83,9 @@
         color: #333;
     }
 
-    /* View Button */
+    /* (View Button)
+       This button loads the AG Grid for the selected instance.
+       I kept it green to fit the page theme, and added small hover animations. */
     .btn-view {
         background: #74c686;
         border: none;
@@ -89,7 +102,8 @@
         transform: translateY(-2px);
     }
 
-    /* Detail header */
+    /* (Detail Section Header)
+       This will display: “Filled by Staff — timestamp” after clicking “View”. */
     #detailHeader {
         margin-top: 35px;
         font-size: 22px;
@@ -97,7 +111,8 @@
         color: #266b30;
     }
 
-    /* AG Grid styling container */
+    /* (AG Grid Container)
+       I added shadow + rounding so the AG grid blends with the rest of the design. */
     #detailGrid {
         margin-top: 15px;
         border-radius: 18px;
@@ -107,20 +122,28 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 
+<!-- (AG Grid Styles + Script)
+     I pull AG Grid from the CDN. This gives me sorting, filtering,
+     and column resizing for free without writing complex JS. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
 <div class="page-card">
 
-    <!-- PAGE TITLE -->
+    <!-- (Page Title)
+         I show which deli the history belongs to so managers always know
+         where they are in the system. -->
     <h2 class="page-title">
         Checklist History — {{ deli.deli_name }}
     </h2>
 
-    <!-- SUMMARY TABLE -->
+    <!-- (Summary Table)
+         This table lists every daily instance of every checklist for this deli.
+         Managers can click "View" to load details in the AG Grid below. -->
     <table>
         <thead>
             <tr>
@@ -130,12 +153,16 @@
                 <th>Open</th>
             </tr>
         </thead>
+
         <tbody>
             {% for instance in instances %}
             <tr>
                 <td>{{ instance.checklist.title }}</td>
                 <td>{{ instance.date }}</td>
                 <td>{% if instance.is_locked %}Yes{% else %}No{% endif %}</td>
+
+                <!-- (Load AG Grid Button)
+                     Clicking this button loads the full checklist responses for that day. (Not sure what is wrong in this section will fix in iteration3) -->
                 <td>
                     <button 
                         class="btn-view"
@@ -148,23 +175,33 @@
         </tbody>
     </table>
 
-    <!-- DETAIL HEADER -->
+    <!-- (Detail Header)
+         When a manager clicks a row, this will show “Filled by — date/time”. -->
     <h3 id="detailHeader"></h3>
 
-    <!-- AG GRID DETAIL TABLE -->
+    <!-- (AG Grid Detail Table)
+         This is where all checklist responses are displayed dynamically. -->
     <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
 
 </div>
 
+
 <script>
 
+/* (Global Grid Variable)
+   I store the grid instance here so I can recreate or update it later. */
 let detailGrid = null;
 
+/* (Load Instance Function)
+   This function fetches the completed checklist data from the backend and
+   builds the AG Grid with the correct column definitions + row data. */
 function loadInstance(instanceId) {
     fetch(`/manager/checklist/instance/${instanceId}/data/`)
         .then(res => res.json())
         .then(data => {
 
+            // (Empty Response Handling)
+            // If the checklist wasn't filled I show a message instead of a blank grid.
             if (!data.columnDefs || data.columnDefs.length === 0) {
                 document.getElementById("detailHeader").innerText =
                     "No responses recorded.";
@@ -172,15 +209,17 @@ function loadInstance(instanceId) {
                 return;
             }
 
-            // Header text
+            // (Update Header)
             document.getElementById("detailHeader").innerText =
                 `Filled by ${data.filled_by} — ${data.filled_time}`;
 
-            // Reset grid content
+            // (Reset Grid Content)
             const gridDiv = document.getElementById("detailGrid");
             gridDiv.innerHTML = "";
 
-            // Create grid (AG Grid V32+)
+            /* (Create AG Grid)
+               AG Grid V32+ uses createGrid instead of new Grid().
+               I pass in the column definitions + row data returned from the backend. */
             detailGrid = agGrid.createGrid(gridDiv, {
                 columnDefs: data.columnDefs,
                 rowData: data.rowData,

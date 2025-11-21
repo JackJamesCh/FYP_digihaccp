@@ -5,141 +5,164 @@ from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
 from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
 from datetime import date
-from .models import Deli, User, Checklist, ChecklistInstance, ChecklistInstanceItem, ChecklistResponse, ResponseItem, TemplateField
+from .models import (
+    Deli,
+    User,
+    Checklist,
+    ChecklistInstance,
+    ChecklistInstanceItem,
+    ChecklistResponse,
+    ResponseItem,
+    TemplateField,
+)
 from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse
 from django.utils.timezone import now, localdate
 import json
 
 
-# Handles the login process
-# I made this function to handle logging users into the system using their email and password.
+# I wrote this view to handle the entire login process using Django's built-in authentication system. Reference:https://docs.djangoproject.com/en/5.0/topics/auth/default/#django.contrib.auth.authenticate
 def login_view(request):
     if request.method == "POST":
+        # I grab the email and password directly from the POST data that the user submitted
         email = request.POST['email']
         password = request.POST['password']
 
-        # This checks if the email and password match a valid user in the database
+        # Here I use Django's authenticate() to check if the email/password match a user this function checks the user model and hashed password behind the scenes.
         user = authenticate(request, email=email, password=password)
         if user is not None:
-            # If authentication succeeds, log the user in
+            # If authentication works, I log the user in with Django's login() helper. Reference: https://docs.djangoproject.com/en/5.0/topics/auth/default/#django.contrib.auth.login
             login(request, user)
 
-            # Redirect users based on their role
+            # After logging in I send the user to a different dashboard depending on their role
             if user.role == 'manager':
                 return redirect('manager_dashboard')
             else:
                 return redirect('dashboard')
         else:
-            # Show an error message if credentials are wrong
+            # If the credentials are wrong I show an error message using Django messages Reference: https://docs.djangoproject.com/en/5.0/ref/contrib/messages/
             messages.error(request, "Invalid email or password")
 
-    # If it's a GET request, it just displays the login page
+    # If it's a GET request or if login failed I just show the login template
     return render(request, 'accounts/login.html')
 
-# Dashboard for staff
-# I made this view for normal staff users once they log in.
+
+# This is the main dashboard for normal staff users. I protected this view using login_required so only authenticated users can see it.
 @login_required(login_url='login')
 def dashboard_view(request):
-    # Renders the staff dashboard and passes in user data
     return render(request, 'accounts/dashboard.html')
 
-# Dashboard for managers
-# Only managers should be able to see this page.
+
+# This is the dashboard for managers. I wanted only users with role "manager" to access this.
+# I manually check the user role here. If they aren't a manager, I send them back to the staff dashboard.
+# If they are a manager, I show the manager dashboard template
+
 @login_required(login_url='login')
 def manager_dashboard_view(request):
     if request.user.role != 'manager':
-        # If someone without the manager role tries to access this, send them back to staff dashboard
         return redirect('dashboard')
     return render(request, 'accounts/manager_dashboard.html')
 
-# Handles user logout
-# This function logs users out of the system.
+
+# I made this view to handle logging users out of the system.
 def logout_view(request):
     logout(request)
     return redirect('login')
 
-# Handles user registration (Sign-Up)
-# This view lets new users register for an account.
+
+# This view handles user registration (sign-up). I built it using a custom SignUpForm that extends Django's user creation logic.
+# If a user is already logged in, I don't want them signing up again so I send them back to the dashboard.
 def signup_view(request):
-    # If the user is already logged in, they shouldn’t see the signup page
     if request.user.is_authenticated:
         return redirect('dashboard')
 
     if request.method == "POST":
+        # I bind the form to the POST data the user submitted
         form = SignUpForm(request.POST)
 
-        # Check if all form data is valid
+        # If the form is valid, I create the user
         if form.is_valid():
-            # Save new user in the database
+            # Save the user to the database using the form's save() method
             user = form.save()
 
-            # Automatically log in the new user after signing up
-            logged_in_user = authenticate(request, email=user.email, password=form.cleaned_data["password"])
+            # Right after creating the user, I try to log them in automatically
+            logged_in_user = authenticate(
+                request,
+                email=user.email,
+                password=form.cleaned_data["password"]
+            )
             if logged_in_user:
                 login(request, logged_in_user)
                 messages.success(request, "Account created. Welcome!")
                 return redirect('dashboard')
 
-            # If automatic login fails, they can log in manually
+            # If for some reason auto-login fails, I still tell them the account was created
             messages.success(request, "Account created. Please log in.")
             return redirect('login')
     else:
-        # If it’s not a POST request, show a blank signup form
+        # For GET requests, I just show an empty sign-up form
         form = SignUpForm()
 
-    # Render the signup page with the signup form
+    # I render the signup page and pass the form so it can be displayed and validated in the template
     return render(request, 'accounts/signup.html', {"form": form})
 
-# Manager-only helper
-# I created this helper function so only managers can access certain views.
+
+# I created this helper function so I could reuse the "is manager" logic in decorators.
+# It checks if a user is both authenticated and has role == "manager". Reference: https://stackoverflow.com/questions/8082670/django-user-passes-test-decorator
 def is_manager(user):
     return user.is_authenticated and user.role == 'manager'
 
-# View to manage all users (Manager only)
+
+# This view allows a manager to see and manage all users. I used @user_passes_test with my is_manager helper so only managers can access it.
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_users_view(request):
-    # This pulls all users from the database, sorted by email
     users = User.objects.all().order_by('email')
     return render(request, 'accounts/manage_users.html', {'users': users})
 
-# View to delete users (Manager only)
+
+# This view lets managers delete users. I again protect it with @user_passes_test so only managers can trigger deletions.
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_user_view(request, user_id):
     try:
+        # I fetch the user by their ID; if they don't exist, this will raise DoesNotExist
         user = User.objects.get(id=user_id)
-        # Prevent managers from deleting other managers
+
+        # I don't want managers deleting other managers, so I block that case
         if user.role == 'manager':
             messages.error(request, "You cannot delete another manager.")
         else:
+            # If the user is not a manager you can delete them
             user.delete()
             messages.success(request, f"{user.email} has been deleted successfully.")
     except User.DoesNotExist:
+        # If the user ID isn't found I show an error
         messages.error(request, "User not found.")
+    # After handling deletion I go back to manage users
     return redirect('manage_users')
 
-# View to list all delis (Manager only)
+
+# This view lets managers see and manage all delis in the system.
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_delis_view(request):
-    # Pulls all delis from the database and displays them
     delis = Deli.objects.all().order_by('deli_name')
     return render(request, 'accounts/manage_delis.html', {'delis': delis})
 
-# View to create or edit a deli (Manager only)
+
+# This view is used for both creating a new deli and editing an existing one. I did this by making deli_id optional and reusing the same form.
+# Reference ModelForm pattern: https://www.geeksforgeeks.org/python/django-modelform-create-form-from-models/
 @user_passes_test(is_manager, login_url='dashboard')
 def deli_form_view(request, deli_id=None):
-    # If an ID is passed, the manager is editing a deli
+    # If deli_id is provided I'm editing an existing deli. Otherwise I'm creating a brand new deli
     if deli_id:
         deli = Deli.objects.get(pk=deli_id)
         form = DeliForm(instance=deli)
         title = "Edit Deli"
     else:
-        # Otherwise, they’re adding a new one
         deli = None
         form = DeliForm()
         title = "Add New Deli"
 
-    # Handles the form submission
+    # If the request is POST I process the form submission
     if request.method == "POST":
         form = DeliForm(request.POST, instance=deli)
         if form.is_valid():
@@ -150,10 +173,11 @@ def deli_form_view(request, deli_id=None):
                 messages.success(request, "New deli created successfully.")
             return redirect('manage_delis')
 
-    # Render the form page
+    # For GET requests or invalid POST I render the form page with the current form
     return render(request, 'accounts/deli_form.html', {'form': form, 'title': title})
 
-# View to delete a deli (Manager only)
+
+# This view lets a manager delete a deli. I try to grab the deli by its primary key. If it doesn't exist, I show an error
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_deli_view(request, deli_id):
     try:
@@ -164,7 +188,9 @@ def delete_deli_view(request, deli_id):
         messages.error(request, "Deli not found.")
     return redirect('manage_delis')
 
-# Assign delis to users (Manager only)
+
+# This view allows a manager to assign one or more delis to a user. First I get the user I want to assign delis to
+# I bind the form to the POST data and tie it to the user instance. Saving the form updates the user's deli assignments
 @user_passes_test(is_manager, login_url='dashboard')
 def assign_delis_view(request, user_id):
     user = User.objects.get(id=user_id)
@@ -175,12 +201,15 @@ def assign_delis_view(request, user_id):
             messages.success(request, f"{user.email} deli assignments updated successfully.")
             return redirect('manage_users')
     else:
+        # For GET I just show the form with current assignments pre-filled
         form = AssignDeliForm(instance=user)
 
-    # Renders the assign delis form
+    # I show the template that lets me assign delis to the user
     return render(request, 'accounts/assign_delis.html', {'form': form, 'user': user})
 
 
+# This view lets a manager create a checklist and its items in bulk. I built this using a custom ChecklistForm and a "pasted items" textarea.
+# Reference: https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Server-side/Django/Forms
 @login_required
 def create_checklist(request):
     if request.user.role != "manager":
@@ -190,14 +219,16 @@ def create_checklist(request):
         form = ChecklistForm(request.POST)
 
         if form.is_valid():
+            # I first save the checklist itself without committing related items yet
             checklist = form.save(commit=False)
             checklist.created_by = request.user
             checklist.save()
 
-            # Convert textarea lines to checklist items
+            # I convert each line from the "items_bulk" textarea into a ChecklistItem. I strip empty lines so only real item names are used
+            # I use an order counter so items appear in the same order they were pasted
+
             pasted_items = form.cleaned_data.get("items_bulk", "")
             lines = [line.strip() for line in pasted_items.split("\n") if line.strip()]
-
             order = 1
             for line in lines:
                 ChecklistItem.objects.create(
@@ -207,38 +238,49 @@ def create_checklist(request):
                 )
                 order += 1
 
+            # After creating the checklist and items I send the user to a simple success page
             return redirect("checklist_success")
-
+        
     else:
         form = ChecklistForm()
 
     return render(request, "accounts/create_checklist.html", {"form": form})
 
 
+# I made this view to show a confirmation page after successfully creating a checklist.
 def checklist_success(request):
     return render(request, "accounts/checklist_success.html")
 
 
+# This view returns JSON data for a specific checklist, so the frontend can render column definitions and row data.
+# Reference: https://www.youtube.com/watch?v=t8cGU5mS3m4
 def api_get_checklist_data(request, pk):
+    # I fetch the checklist or show a 404 if it doesn't exist
     checklist = get_object_or_404(Checklist, pk=pk)
     template_fields = checklist.template.fields.order_by("order")
     items = checklist.items.order_by("order")
 
+    # I start with a base column for the item name
     column_defs = [{"headerName": "Item Name", "field": "item_name"}]
 
+    # Then I add a column for each template field.
     for field in template_fields:
         column_defs.append({
             "headerName": field.label,
             "field": field.name,
         })
 
+    # Now I build the row data, with one row per checklist item
     row_data = []
     for i in items:
+        # Each row starts with the item name
         row = {"item_name": i.name}
+        # For each template field, I start with an empty value to be filled later
         for field in template_fields:
             row[field.name] = ""
         row_data.append(row)
 
+    # Finally, I return all this as JSON so the frontend can render a dynamic grid.
     return JsonResponse({
         "title": checklist.title,
         "template": checklist.template.name,
@@ -249,12 +291,16 @@ def api_get_checklist_data(request, pk):
     })
 
 
+# This view lets managers see all checklists across the delis they are assigned to.
 @login_required
 def manager_checklists_combined(request):
     if request.user.role != "manager":
         return redirect("dashboard")
 
+    # I get all delis assigned to the current manager
     delis = request.user.delis.all()
+
+    # Then I find all checklists for those delis, newest first
     checklists = Checklist.objects.filter(deli__in=delis).order_by("-created_at")
 
     return render(request, "accounts/manager_checklists_combined.html", {
@@ -262,18 +308,21 @@ def manager_checklists_combined(request):
     })
 
 
+# This view is for staff users to see the checklists they need to fill in.
+# It also auto-creates daily instances of checklists if they don't exist for today.
 @login_required
 def staff_view_checklists(request):
-    # Only staff should access this
+    # I only want staff to access this; managers shouldn't fill staff checklists here
     if request.user.role != "staff":
         return redirect("dashboard")
 
-    # All delis assigned to this user
+    # I get all delis assigned to the current staff user
     delis = request.user.delis.all()
 
+    # I use Python's date.today() to know which day's instance to use
     today = date.today()
 
-    # All checklists assigned to user's delis
+    # I find all active checklists assigned to any of the user's delis
     checklists = Checklist.objects.filter(
         deli__in=delis,
         is_active=True
@@ -281,8 +330,10 @@ def staff_view_checklists(request):
 
     instances = []
 
+    # For each checklist, I either find or create a ChecklistInstance for today
+    # I used get_or_create here to avoid duplicates:
+    # Reference: https://docs.djangoproject.com/en/5.2/ref/models/querysets/#get-or-create
     for checklist in checklists:
-        # Check if a daily instance already exists
         instance, created = ChecklistInstance.objects.get_or_create(
             checklist=checklist,
             deli=checklist.deli,
@@ -290,7 +341,7 @@ def staff_view_checklists(request):
             defaults={"is_locked": False}
         )
 
-        # If created today → generate rows (ChecklistInstanceItem)
+        # If I just created this instance today I also create the row items
         if created:
             for item in checklist.items.all():
                 ChecklistInstanceItem.objects.create(
@@ -300,46 +351,55 @@ def staff_view_checklists(request):
 
         instances.append(instance)
 
+    # I render a template that shows all today's instances for the staff user
     return render(request, "accounts/staff_checklists.html", {
         "instances": instances,
         "today": today
     })
 
 
+# This view renders the actual "fill checklist" page building up a JSON structure
+# for columns and rows that the frontend can use.
 @login_required
 def fill_checklist_view(request, instance_id):
+    # I get the checklist instance or return 404 if it's missing
     instance = get_object_or_404(ChecklistInstance, pk=instance_id)
 
-    # Ensure user belongs to this deli
+    # I make sure the current user is actually assigned to this deli
     if instance.deli not in request.user.delis.all():
         return redirect("dashboard")
 
     locked = instance.is_locked
 
-    # --- 1️⃣ GET OR CREATE RESPONSE ---
-    # Fix: You cannot filter by completed_at__date inside get_or_create
+    # GET OR CREATE RESPONSE
+    # I realized I can't use completed_at__date directly in get_or_create so I first filter the queryset and then either get the first or create one.
     response_qs = ChecklistResponse.objects.filter(
         checklist=instance.checklist,
         deli=instance.deli,
         completed_by=request.user,
     )
 
-    # Daily checklists: use today's response
+    # For daily checklists, I want only today's response
+    # I used localdate() here based on Django timezone docs:
+    # Reference: https://docs.djangoproject.com/en/5.2/topics/i18n/timezones/
     if instance.checklist.frequency == "daily":
         response_qs = response_qs.filter(completed_at__date=localdate())
 
     response = response_qs.first()
     if not response:
+        # If no response exists yet I create one for this user / deli / checklist
         response = ChecklistResponse.objects.create(
             checklist=instance.checklist,
             deli=instance.deli,
             completed_by=request.user
         )
 
-    # --- 2️⃣ BUILD GRID DATA ---
+    # BUILD GRID DATA
+    # I fetch all fields for the checklist template and items for the checklist itself
     fields = instance.checklist.template.fields.order_by("order")
     items = instance.checklist.items.order_by("order")
 
+    # row_data will become a list of dicts, each representing a row in the grid
     row_data = []
     for item in items:
         row = {
@@ -347,6 +407,8 @@ def fill_checklist_view(request, instance_id):
             "item_name": item.name,
         }
 
+        # For each template field, I either get or create a ResponseItem
+        # This pattern lets me ensure there is always a ResponseItem row ready for saving.
         for field in fields:
             answer, _ = ResponseItem.objects.get_or_create(
                 response=response,
@@ -354,7 +416,7 @@ def fill_checklist_view(request, instance_id):
                 template_field=field
             )
 
-            # push value into JSON table
+            # I convert the answer into a basic value that can be safely JSON-encoded
             value = None
             if field.field_type == "text":
                 value = answer.answer_text
@@ -373,13 +435,15 @@ def fill_checklist_view(request, instance_id):
 
         row_data.append(row)
 
-    # --- 3️⃣ COLUMN DEFINITIONS ---
+    # COLUMN DEFINITIONS
+    # I start with a non-editable "Item" column that shows the name of the checklist item
     col_defs = [{
         "headerName": "Item",
         "field": "item_name",
         "editable": False,
     }]
 
+    # For each template field, I create a column that is editable unless the instance is locked
     for field in fields:
         col_defs.append({
             "headerName": field.label,
@@ -387,7 +451,9 @@ def fill_checklist_view(request, instance_id):
             "editable": not locked,
         })
 
-    # --- 4️⃣ RETURN JSON SAFELY TO TEMPLATE ---
+    # RETURN JSON SAFELY TO TEMPLATE
+    # I pass the column and row definitions as JSON strings so the JS on the template can read them.
+    # Reference: https://docs.djangoproject.com/en/5.2/topics/serialization/#id2
     return render(request, "accounts/fill_checklist.html", {
         "instance": instance,
         "column_defs_json": json.dumps(col_defs),
@@ -397,31 +463,37 @@ def fill_checklist_view(request, instance_id):
     })
 
 
+# This view is used by the frontend to save a single field value when the user edits a cell in the grid.
 @login_required
 def api_save_field(request):
     if request.method != "POST":
+        # I only accept POST here; other methods get a 405 error
         return JsonResponse({"error": "Invalid method"}, status=405)
 
+    # I pull all the data I need from the POST request
     response_id = request.POST.get("response_id")
     item_id = request.POST.get("item_id")
     field_name = request.POST.get("field")
     value = request.POST.get("value")
 
+    # I use get_object_or_404 to ensure these related objects exist or return a 404
     response = get_object_or_404(ChecklistResponse, id=response_id)
     item = get_object_or_404(ChecklistItem, id=item_id)
     template_field = get_object_or_404(TemplateField, name=field_name)
 
-    # Look up row
+    # I look up the existing ResponseItem row that matches the response item and template field
     answer = ResponseItem.objects.get(
         response=response,
         checklist_item=item,
         template_field=template_field
     )
 
-    # Save based on field type
+    # I now update the correct field on the ResponseItem based on the field type.
+    # This is a common pattern when handling dynamic form-like data.
     if template_field.field_type == "text":
         answer.answer_text = value
     elif template_field.field_type == "date":
+        # In a more advanced version I might parse the date string properly here.
         answer.answer_date = value or None
     elif template_field.field_type == "datetime":
         answer.answer_datetime = value or None
@@ -432,23 +504,27 @@ def api_save_field(request):
     elif template_field.field_type == "boolean":
         answer.answer_boolean = (value.lower() == "true")
 
+    # After updating I save the object to persist the changes
     answer.save()
 
+    # I return a simple JSON success response
     return JsonResponse({"success": True})
 
 
-
+# This view lets a manager see the full checklist history for a specific deli.
 @login_required
 def deli_checklist_history(request, deli_id):
     if request.user.role != "manager":
         return redirect("dashboard")
 
+    # I use deli_ID instead of pk here based on how the model was defined
     deli = get_object_or_404(Deli, deli_ID=deli_id)
 
-    # Only allow managers assigned to this deli
+    # I also make sure the manager actually has access to this deli
     if deli not in request.user.delis.all():
         return redirect("manager_dashboard")
 
+    # I fetch all instances for this deli ordered from newest date to oldest
     instances = ChecklistInstance.objects.filter(
         deli=deli
     ).order_by("-date", "-created_at")
@@ -459,28 +535,33 @@ def deli_checklist_history(request, deli_id):
     })
 
 
+# This API view returns the detailed grid data for a specific checklist instance,
+# so managers can see what staff filled in on that day.
 @login_required
 def api_manager_instance_detail(request, instance_id):
+    # I get the instance or show 404 if it doesn't exist
     instance = get_object_or_404(ChecklistInstance, id=instance_id)
 
-    # Collect fields & items
+    # I collect the checklist its fields and items to build the grid structure
     checklist = instance.checklist
     fields = checklist.template.fields.order_by("order")
     items = checklist.items.order_by("order")
 
-    # Find the staff response(s)
+    # I find responses completed for this checklist in this deli on that specific date
     responses = ChecklistResponse.objects.filter(
         checklist=checklist,
         deli=instance.deli,
         completed_at__date=instance.date
     )
 
+    # If there is no response I just return empty structures
     if not responses.exists():
         return JsonResponse({"columnDefs": [], "rowData": []})
 
+    # For now I just take the first response (assuming one per checklist per day)
     response = responses.first()
 
-    # Build row data
+    # I now build the row data for the grid
     row_data = []
     for item in items:
         row = {
@@ -488,11 +569,13 @@ def api_manager_instance_detail(request, instance_id):
         }
         for field in fields:
             try:
+                # I try to find the ResponseItem for this item plus field
                 answer = ResponseItem.objects.get(
                     response=response,
                     checklist_item=item,
                     template_field=field
                 )
+                # I pick whichever of the answer fields is not None. This works because only one of them should be used depending on field_type.
                 value = (
                     answer.answer_text or
                     answer.answer_date or
@@ -502,12 +585,13 @@ def api_manager_instance_detail(request, instance_id):
                     answer.answer_boolean
                 )
             except ResponseItem.DoesNotExist:
+                # If there is no response for that item/field I just leave it empty
                 value = ""
 
             row[field.name] = value
         row_data.append(row)
 
-    # Build column defs
+    # I also build the column definitions: one for item name plus one for each template field
     col_defs = [{"headerName": "Item", "field": "item_name"}]
     for field in fields:
         col_defs.append({
@@ -516,6 +600,8 @@ def api_manager_instance_detail(request, instance_id):
             "editable": False,
         })
 
+    # I return all the grid data plus extra info (who filled it and when)
+    # Reference: https://docs.python.org/3/library/datetime.html#datetime.date.strftime
     return JsonResponse({
         "columnDefs": col_defs,
         "rowData": row_data,

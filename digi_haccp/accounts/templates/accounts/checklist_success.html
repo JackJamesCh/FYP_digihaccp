@@ -3,18 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <title>Checklist Created</title>
+
+    <!-- (DaisyUI Import)
+         I added DaisyUI here because it gives me access to nice button + card styles quickly
+         without writing too much custom CSS. -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
-    <script>document.documentElement.setAttribute('data-theme', 'pastel');</script>
+
+    <script>
+        /* (Theme Setup)
+           I manually set the theme instead of using config, because this is just a small success page. */
+        document.documentElement.setAttribute('data-theme', 'pastel');
+    </script>
 </head>
 
+<!-- (Background Wrapper)
+     I used the green background here to keep the look consistent with the rest of the checklist creation flow. -->
 <body class="bg-green-200 min-h-screen flex items-center justify-center">
 
+    <!-- (Success Card)
+         This simple card is centered using flexbox. I made it small because it’s only showing a short message. -->
     <div class="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md">
+
+        <!-- (Main Success Message)-->
         <h2 class="text-2xl font-bold mb-3">Checklist Created Successfully!</h2>
         <p class="mb-6">Your checklist has been saved.</p>
 
+        <!-- (Buttons)
+             The first lets me create another checklist.
+             The second returns to the appropriate dashboard.
+             I used DaisyUI button styles for consistency. -->
         <a href="{% url 'create_checklist' %}" class="btn btn-primary w-full">Create Another</a>
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary w-full mt-3">Return to Dashboard</a>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary w-full mt-3">
+            Return to Dashboard
+        </a>
     </div>
 
 </body>

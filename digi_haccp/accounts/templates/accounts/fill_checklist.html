@@ -3,22 +3,32 @@
 
 {% block body_style %}
 <style>
+
+    /* (Page Background)
+       I used the same green gradient theme so the checklist-filling
+       page feels connected to the rest of the app. */
     body {
         background: linear-gradient(to bottom right, #a8e063, #56ab2f);
         animation: fadeIn 0.6s ease-out;
         min-height: 100vh;
     }
 
+    /* (Page Fade-in Animation)
+       I added this small animation so the page loads smoothly. */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(12px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* (Card Float Animation)
+       I wanted the main card to feel like it's floating in. */
     @keyframes floatIn {
         from { opacity: 0; transform: translateY(20px) scale(0.97); }
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* WIDER PAGE */
+    /* (Main Wide Wrapper)
+       This wrapper gives the page breathing room and centers content nicely. */
     .page-wrapper {
         padding: 0 20px;
         animation: floatIn 0.7s ease-out;
@@ -26,6 +36,7 @@
 
     .header-block { margin-bottom: 100px; }
 
+    /* (Small "Checklist Entry" label above title) */
     .sub-label {
         font-size: 13px;
         color: #eaf7e8;
@@ -33,6 +44,9 @@
         text-transform: uppercase;
         opacity: 0.9;
     }
+
+    /* (Big Page Title)
+       I made it bold so staff instantly know which checklist they’re filling. */
     .page-title {
         font-size: 48px;
         font-weight: 900;
@@ -41,7 +55,10 @@
         text-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
 
+    /* (Date + Status Row)
+       These little pills show today's date and whether the checklist is locked. */
     .date-row { display: flex; gap: 12px; }
+
     .date-pill {
         background: rgba(255,255,255,0.25);
         padding: 6px 14px;
@@ -58,16 +75,20 @@
         text-transform: uppercase;
     }
 
-    /* WIDER, less tall CARD */
+    /* (Main Card)
+       I made the card wide and reduced the height padding so the AG Grid
+       fits comfortably without making the page overly tall. */
     .form-card {
         background: white;
-        padding: 50px 50px;     /* reduced height padding */
+        padding: 50px 50px;
         border-radius: 40px;
         box-shadow: 0 25px 60px rgba(0,0,0,0.10);
         border: 1px solid #d8d8d8;
         margin-top: 40px;
     }
 
+    /* (Divider Line)
+       Just a small visual break before the grid starts. */
     .divider-line {
         height: 3px;
         background: linear-gradient(to right, #b5ddb5, transparent);
@@ -75,20 +96,25 @@
         border-radius: 10px;
     }
 
+    /* (Instruction Text)
+       I put this here to remind staff that fields save automatically. */
     .instructions {
         color: #4b4b4b;
         font-size: 20px;
         margin-bottom: 20px;
     }
 
-    /* AG GRID (smaller height) */
+    /* (AG Grid Container)
+       I reduced the height because 900px was too tall visually. */
     #myGrid {
-        height: 600px !important;   /* was 900 */
+        height: 600px !important;
         border-radius: 20px;
         box-shadow: 0 20px 45px rgba(0,0,0,0.08);
         overflow: hidden;
     }
 
+    /* (AG Grid Theme Adjustments)
+       I increased row/header size so staff can easily tap on tablets. */
     .ag-theme-alpine {
         --ag-row-height: 44px;
         --ag-header-height: 50px;
@@ -97,13 +123,17 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 
+<!-- (Main Wrapper)
+     This contains the header and the form card. -->
 <div class="page-wrapper">
 
-    <!-- Header Section -->
+    <!-- (Header Section)
+         I display the checklist title, date and editable/locked status here. -->
     <div class="header-block">
-    <br>
+        <br>
         <p class="sub-label">Checklist Entry</p>
 
         <h1 class="page-title">{{ instance.checklist.title }}</h1>
@@ -120,7 +150,8 @@
     </div>
 
 
-    <!-- Main Card -->
+    <!-- (Main Form Card)
+         This is where AG Grid loads and staff actually enter checklist answers. -->
     <div class="form-card">
 
         <p class="instructions">
@@ -129,6 +160,7 @@
 
         <div class="divider-line"></div>
 
+        <!-- AG Grid Table -->
         <div id="myGrid"
             class="ag-theme-alpine w-full"
             style="height: 650px;">
@@ -139,20 +171,28 @@
 </div>
 
 
-<!-- AG GRID -->
+<!-- (AG Grid Imports)
+     I included both CSS and JS here so the grid renders fully styled. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
+
 <script>
+    /* (Grid Data From Backend)
+       These values come directly from Django when the page loads. (Did not have time to fix this issue but will fix it in iteration 3) */
     const columnDefs = {{ column_defs_json|safe }};
     const rowData = {{ row_data_json|safe }};
     const locked = {{ locked|yesno:"true,false" }} === "true";
     const responseId = "{{ response_id }}";
 
-    /* Hidden backend-only ID column */
+    /* (Hidden ID Column)
+       I add the hidden ID column first so each row knows which item it belongs to. */
     columnDefs.unshift({ field: "item_id", hide: true, editable: false });
 
+    /* (AG Grid Options)
+       I configured the grid to auto-save when users edit fields.
+       If the checklist is locked, editing is disabled. */
     const gridOptions = {
         columnDefs,
         rowData,
@@ -165,9 +205,14 @@
         animateRows: true,
         rowSelection: "single",
 
+        /* (Auto-Save on Change)
+           Every time a staff member edits a cell I send that new value to Django using fetch(). */
         onCellValueChanged(event) {
             if (locked) return;
+
             const field = event.colDef.field;
+
+            // avoid saving non-editable columns
             if (field === "item_id" || field === "item_name") return;
 
             fetch("{% url 'api_save_field' %}", {
@@ -186,6 +231,8 @@
         }
     };
 
+    /* (Create the Grid)
+       Finally, I mount the AG Grid onto the #myGrid div. */
     agGrid.createGrid(document.getElementById("myGrid"), gridOptions);
 </script>
 

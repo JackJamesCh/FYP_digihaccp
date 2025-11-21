@@ -3,11 +3,19 @@
 {% block title %}Manage Users | Digi HACCP{% endblock %}
 
 {% block extra_head %}
+
+<!-- (UI Frameworks)
+     I added DaisyUI + Google Fonts so the whole page looks
+     clean and matches the design of the rest of the system. -->
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
 <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
+
+  /* (Page Background)
+     I used the green gradient theme here again so the user management
+     page looks consistent with all other manager screens. */
   body {
     font-family: "Poppins", sans-serif;
     background: linear-gradient(135deg, #a8e063, #56ab2f);
@@ -17,6 +25,8 @@
     min-height: 100vh;
   }
 
+  /* (Shared Navbar)
+     I reused the same navbar template styling so navigation stays familiar. */
   .navbar {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
@@ -48,6 +58,8 @@
     color: #e6ffcc;
   }
 
+  /* (Main Content Area)
+     I centered the main card here and added padding for breathing room. */
   main {
     flex-grow: 1;
     display: flex;
@@ -56,6 +68,8 @@
     padding: 50px 20px;
   }
 
+  /* (Main Card Container)
+     This holds the entire user table + messages. */
   .card {
     background: white;
     width: 100%;
@@ -76,6 +90,8 @@
     margin-bottom: 20px;
   }
 
+  /* (Tables)
+     I used a simple zebra-style table that DaisyUI enhances automatically. It stays readable even with many users. */
   table {
     width: 100%;
     border-collapse: collapse;
@@ -95,6 +111,8 @@
     transition: background 0.2s ease-in-out;
   }
 
+  /* (Message Alerts)
+     These appear when managers delete or update users. */
   .alert {
     border-radius: 10px;
     padding: 12px 15px;
@@ -108,6 +126,8 @@
   }
 
   @media (max-width: 768px) {
+    /* (Mobile Adjustments)
+       I tightened padding and reduced font sizes so the table fits comfortably on smaller screens. */
     .card-body {
       padding: 25px;
     }
@@ -123,14 +143,21 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 <main>
+  <!-- (Main User Management Card)
+       This card contains the whole user list, messages and actions. -->
   <div class="card">
     <div class="card-body">
+
+      <!-- (Page Title) -->
       <div class="flex justify-between items-center mb-6">
         <h2 class="page-title">User Management</h2>
       </div>
 
+      <!-- (Flash Messages)
+           These appear when a user is deleted or something goes wrong. -->
       {% if messages %}
       <div class="mb-4">
         {% for message in messages %}
@@ -139,6 +166,13 @@
       </div>
       {% endif %}
 
+      <!-- (Users Table)
+           This table shows:
+             - email
+             - role (staff/manager badge)
+             - assigned delis
+             - actions managers can perform  
+           I wrapped it in overflow-x-auto so it scrolls on smaller screens. -->
       <div class="overflow-x-auto">
         <table class="table table-zebra w-full">
           <thead>
@@ -153,8 +187,12 @@
           <tbody>
             {% for user in users %}
             <tr>
+
+              <!-- (User Email) -->
               <td class="font-medium">{{ user.email }}</td>
 
+              <!-- (Role Badge)
+                   I added different colors so it's easy to spot managers. -->
               <td>
                 {% if user.role == "manager" %}
                   <span class="badge badge-success">{{ user.role|title }}</span>
@@ -163,6 +201,8 @@
                 {% endif %}
               </td>
 
+              <!-- (Assigned Delis)
+                   I showed them as little badges for readability. -->
               <td>
                 {% if user.delis.all %}
                   {% for deli in user.delis.all %}
@@ -175,10 +215,19 @@
                 {% endif %}
               </td>
 
+              <!-- (Actions)
+                   Managers can:
+                     - assign delis
+                     - delete users  
+                   They cannot delete themselves. -->
               <td>
                 <div class="flex flex-wrap gap-2">
+
+                  <!-- (Assign Delis Button) -->
                   <a href="{% url 'assign_delis' user.id %}" class="btn btn-primary btn-sm">Assign Delis</a>
 
+                  <!-- (Delete Button)
+                       Disabled for themselves to avoid accidental lockouts. -->
                   {% if user.id != request.user.id %}
                   <a href="{% url 'delete_user' user.id %}" 
                      class="btn btn-error btn-sm"
@@ -188,11 +237,14 @@
                   {% else %}
                   <button class="btn btn-disabled btn-sm">You</button>
                   {% endif %}
+
                 </div>
               </td>
             </tr>
 
             {% empty %}
+            <!-- (Empty State)
+                 If there are no users, show a simple friendly message. -->
             <tr>
               <td colspan="4" class="text-center text-gray-500 py-6">No users found.</td>
             </tr>

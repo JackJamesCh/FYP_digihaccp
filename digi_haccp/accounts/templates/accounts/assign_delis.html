@@ -3,7 +3,13 @@
 {% block title %}Assign Delis | Digi HACCP{% endblock %}
 
 {% block extra_head %}
+
+<!-- (Custom Styling Block)
+     I styled this page so the card sits centered and the layout feels simple.-->
 <style>
+
+  /* (Main Container)
+     I centered the form using flexbox so it stays in the middle of the screen even on larger monitors. */
   main {
     flex-grow: 1;
     display: flex;
@@ -12,6 +18,7 @@
     padding: 60px 20px;
   }
 
+  /* (White Form Card)*/
   .card {
     background: white;
     border-radius: 20px;
@@ -22,6 +29,8 @@
     animation: fadeIn 0.6s ease-out;
   }
 
+  /* (Main Heading)
+     I kept the heading centered so it looks more balanced. */
   h2 {
     text-align: center;
     font-size: 26px;
@@ -30,6 +39,8 @@
     margin-bottom: 25px;
   }
 
+  /* (Labels)
+     Clear labels help the user know what they’re selecting. */
   label {
     display: block;
     font-weight: 600;
@@ -37,6 +48,9 @@
     margin-bottom: 8px;
   }
 
+  /* (Deli Select Dropdown)
+     I made the dropdown wider with rounded corners to match the style
+     of other forms. */
   select {
     width: 100%;
     padding: 12px;
@@ -45,16 +59,20 @@
     font-size: 15px;
     color: #333;
     outline: none;
-    appearance: none;
+    appearance: none; /* removes default arrow differences across browsers */
     background-color: #fff;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
+  /* (Dropdown Focus Effect)
+     This makes the select feel more interactive. */
   select:focus {
     border-color: #2e7d32;
     box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
   }
 
+  /* (Button Group)
+     I split the bottom buttons into two equal-sized ones. */
   .button-group {
     display: flex;
     justify-content: space-between;
@@ -62,6 +80,8 @@
     gap: 10px;
   }
 
+  /* (Save Button)
+     This is the primary action, so it's green. */
   button, a.button-link {
     flex: 1;
     padding: 12px 0;
@@ -84,6 +104,8 @@
     transform: scale(1.03);
   }
 
+  /* (Back Button)
+     I styled this as an outline button so it's clearly secondary. */
   a.button-link {
     background-color: white;
     color: #2e7d32;
@@ -96,11 +118,14 @@
     transform: scale(1.03);
   }
 
+  /* (Simple Fade In Animation) */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* (Mobile Adjustments)
+     The buttons stack on small screens to avoid squishing. */
   @media (max-width: 768px) {
     .card {
       padding: 25px;
@@ -112,21 +137,40 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 <main>
+
+  <!-- (Main Assignment Card)
+       This card holds the form where I choose which delis belong to the user. -->
   <div class="card">
+
+    <!-- (Heading)
+         Shows the email of the user I am assigning delis to. -->
     <h2>Assign Delis to {{ user.email }}</h2>
 
+    <!-- (Assignment Form)
+         Uses POST + CSRF for security. -->
     <form method="POST">
       {% csrf_token %}
+
+      <!-- (Delis Dropdown)
+           Django renders this as a multi-select automatically because
+           the form uses ModelMultipleChoiceField.
+           Ref: https://docs.djangoproject.com/en/5.2/ref/forms/fields/#modelmultiplechoicefield -->
       <label for="id_delis">Select one or more Delis</label>
       {{ form.delis }}
 
+      <!-- (Footer Buttons)
+           Save = submit changes.
+           Back = return to user management page. -->
       <div class="button-group">
         <button type="submit">Save</button>
         <a href="{% url 'manage_users' %}" class="button-link">← Back</a>
       </div>
+
     </form>
   </div>
+
 </main>
 {% endblock %}

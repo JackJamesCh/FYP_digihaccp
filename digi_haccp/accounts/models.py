@@ -21,6 +21,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+
 # (Deli model)
 # This model represents a Deli store. Each deli has an ID, name, address, and phone number.
 class Deli(models.Model):
@@ -31,6 +32,7 @@ class Deli(models.Model):
 
     def __str__(self):
         return self.deli_name  # This helps display the deli name in the admin panel
+
 
 # User model (many-to-many to Deli)
 # I built a custom user model so I could use email for login instead of the default username.
@@ -57,10 +59,13 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.email  # Displays the email when referring to a user object
 
-# -------------------------
-#  EXTENSIBLE CHECKLIST SYSTEM
-# -------------------------
 
+
+#  EXTENSIBLE CHECKLIST SYSTEM
+
+# (Checklist Template)
+# I created this model so the system can support different types of checklist formats.
+# Each template represents a “type” of checklist like Food Safety or Cleaning.
 class ChecklistTemplate(models.Model):
     """
     Defines a *type* of checklist.
@@ -76,7 +81,9 @@ class ChecklistTemplate(models.Model):
         return self.name
 
 
-
+# (Template Field)
+# I made this so each template can have flexible types of questions.
+# For example: text fields, dates, numbers and yes/no answers.
 class TemplateField(models.Model):
     """
     Defines a field inside a template (dynamic field structure).
@@ -103,14 +110,15 @@ class TemplateField(models.Model):
     label = models.CharField(max_length=255)     # human readable label
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES)
     required = models.BooleanField(default=True)
-
     order = models.PositiveIntegerField(default=0)   # ordering of fields
 
     def __str__(self):
         return f"{self.template.name}: {self.label}"
 
 
-
+# (Checklist Model)
+# This represents a single checklist created by a manager for a specific deli.
+# I used a template so the structure of the checklist is dynamic and reusable.
 class Checklist(models.Model):
     """
     A single checklist created by a manager for a deli and date.
@@ -131,14 +139,15 @@ class Checklist(models.Model):
 
     frequency = models.CharField(max_length=20, choices=FREQUENCIES, default='daily')
     title = models.CharField(max_length=255, blank=True)
-
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title or f"{self.template.name} - {self.deli.deli_name} ({self.frequency})"
 
 
-
+# (Checklist Item)
+# These are the actual rows/questions inside a specific checklist.
+# I added an order field so I can control the order the items appear in.
 class ChecklistItem(models.Model):
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="items")
     name = models.CharField(max_length=255)
@@ -148,6 +157,9 @@ class ChecklistItem(models.Model):
         return f"{self.name} ({self.checklist})"
 
 
+# (Checklist Response)
+# Whenever a staff member fills out a checklist, I save one ChecklistResponse instance.
+# This lets me keep history of who filled what and when.
 class ChecklistResponse(models.Model):
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="responses")
     deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
@@ -158,6 +170,9 @@ class ChecklistResponse(models.Model):
         return f"Response to {self.checklist} by {self.completed_by.email}"
 
 
+# (Response Item)
+# This stores a SINGLE answer to a SINGLE field on a SINGLE checklist item.
+# I made this flexible so it can store text, dates, numbers or yes/no.
 class ResponseItem(models.Model):
     """
     Stores a SINGLE answer to a SINGLE template field for a SINGLE checklist item,
@@ -182,7 +197,9 @@ class ResponseItem(models.Model):
         related_name="responses"
     )
 
-    # Universal answer system:
+    # (Flexible Answer Fields)
+    # I added different fields here so I can support all possible answer types
+    # based on the template field (text, date, number, boolean, etc.)
     answer_text = models.TextField(null=True, blank=True)
     answer_date = models.DateField(null=True, blank=True)
     answer_datetime = models.DateTimeField(null=True, blank=True)
@@ -194,12 +211,14 @@ class ResponseItem(models.Model):
         return f"{self.checklist_item} — {self.template_field.label}"
 
 
-
+# (Checklist Instance)
+# I created this so staff can fill a checklist repeatedly—for example once per day.
+# Each instance represents the checklist for a specific date.
 class ChecklistInstance(models.Model):
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="instances")
     deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
     date = models.DateField()  # The day this instance is for
-    is_locked = models.BooleanField(default=False)
+    is_locked = models.BooleanField(default=False)  # I lock an instance after staff complete it
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -207,9 +226,10 @@ class ChecklistInstance(models.Model):
 
     def __str__(self):
         return f"{self.checklist.title} — {self.deli} — {self.date}"
-    
 
-
+# (Checklist Instance Item)
+# This connects a generated checklist instance to the actual checklist items.
+# Staff will later fill answers for these items using ResponseItem.
 class ChecklistInstanceItem(models.Model):
     instance = models.ForeignKey(
         ChecklistInstance, on_delete=models.CASCADE, related_name="items"
@@ -217,10 +237,6 @@ class ChecklistInstanceItem(models.Model):
     checklist_item = models.ForeignKey(
         ChecklistItem, on_delete=models.CASCADE
     )
-    # One per template field — answered by staff
-    # Will be filled by ResponseItem
 
     def __str__(self):
         return f"{self.instance} — {self.checklist_item}"
-
-

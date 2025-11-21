@@ -3,14 +3,24 @@
 {% block title %}Checklists | Digi HACCP{% endblock %}
 
 {% block extra_head %}
+
+<!-- (UI Frameworks)
+     I imported DaisyUI + Tailwind for easy button and layout styling.
+     This keeps the entire checklist UI consistent with the rest of the site. -->
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
 <script>document.documentElement.setAttribute('data-theme', 'pastel');</script>
 
+<!-- (AG Grid)
+     I included AG Grid here since this page displays dynamic table data.
+     The Alpine theme gives it a clean spreadsheet-like look. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
 
 <style>
+
+  /* (Background Styling)
+     I kept the same green gradient theme to match the rest of the HACCP system. */
   body {
     background: linear-gradient(135deg, #a8e063, #56ab2f);
     font-family: "Poppins", sans-serif;
@@ -18,6 +28,8 @@
     padding-bottom: 40px;
   }
 
+  /* (Navbar)
+     This navbar style matches all other pages so the layout feels unified. */
   .navbar {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(8px);
@@ -29,6 +41,8 @@
     font-weight: 600;
   }
 
+  /* (Content Card)
+     I wrapped everything in a centered card so the page doesn't stretch too wide. */
   .card {
     background: white;
     border-radius: 20px;
@@ -38,6 +52,8 @@
     max-width: 1200px;
   }
 
+  /* (Table Styles)
+     Basic clean table layout so managers can quickly scan through checklists. */
   table {
     width: 100%;
     margin-bottom: 20px;
@@ -53,14 +69,20 @@
     font-weight: 700;
   }
 </style>
+
 {% endblock %}
 
 {% block content %}
 
+<!-- (Main Content Card)
+     This card holds the full list of all checklists created for all delis. -->
 <div class="card">
 
+  <!-- (Page Title) -->
   <h2 class="text-3xl font-bold mb-6 text-center">Checklists</h2>
 
+  <!-- (Create Checklist Button)
+       I added this so managers can quickly create new checklists from this page. -->
   <div class="flex justify-end mb-4" style="padding-top: 10px; padding-bottom: 10px;">
       <a href="{% url 'create_checklist' %}" 
       class="btn btn-warning px-6 py-2 font-semibold">
@@ -68,6 +90,14 @@
       </a>
   </div>
 
+  <!-- (Checklist List Table)
+       This table shows all checklists the manager has access to:
+       - Title
+       - Deli it belongs to
+       - Template used
+       - Frequency
+       - Date created
+       - A button to view the data -->
   <table>
       <thead>
           <tr>
@@ -88,6 +118,9 @@
               <td>{{ c.template.name }}</td>
               <td>{{ c.frequency|title }}</td>
               <td>{{ c.created_at|date:"d M Y, H:i" }}</td>
+
+              <!-- (View Button)
+                   When clicked it loads this checklist's data into the AG Grid below. -->
               <td>
                   <button onclick="loadChecklist({{ c.id }})"
                           class="btn btn-accent btn-sm">View</button>
@@ -99,23 +132,34 @@
 
   <hr class="my-6">
 
+  <!-- (Selected Checklist Title)
+       When the user clicks "View", I update this heading dynamically. -->
   <h3 id="detailTitle" class="text-xl font-bold mb-4"></h3>
 
+  <!-- (AG Grid Container)
+       This is where all the dynamic checklist questions + columns are displayed. -->
   <div id="myGrid" class="ag-theme-alpine" style="height: 500px; width: 100%;"></div>
 
 </div>
 
+<!-- (JavaScript: Load Selected Checklist)
+     When a manager clicks the "View" button I make a fetch call to the API endpoint
+     and build the AG Grid with the returned JSON data. -->
 <script>
 function loadChecklist(id) {
     fetch(`/api/checklists/${id}/`)
     .then(res => res.json())
     .then(data => {
 
+        // Update header with selected checklist name
         document.getElementById("detailTitle").innerText =
             `${data.title} — ${data.deli} (${data.template})`;
 
+        // Clear previous grid content
         document.getElementById("myGrid").innerHTML = "";
 
+        // (Create AG Grid)
+        // I pass in the column definitions + row data sent from Django.
         agGrid.createGrid(document.getElementById("myGrid"), {
             columnDefs: data.columnDefs,
             rowData: data.rowData,

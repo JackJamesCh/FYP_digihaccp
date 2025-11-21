@@ -4,12 +4,15 @@
 {% block body_style %}
 <style>
 
-    /* --- Page Background (uses your provided green shade) --- */
+    /* (Page Background)
+       I used the same green gradient theme to keep the staff dashboard visually
+       consistent with the rest of the system. The fade-in animation just makes
+       the page feel more lively when it loads. */
     body {
         background: linear-gradient(
             to bottom right,
-            #a8e063,   /* very soft mint-green */
-            #56ab2f    /* your provided green shade */
+            #a8e063,   
+            #56ab2f    
         );
         animation: fadeIn 0.7s ease-out;
     }
@@ -19,7 +22,9 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- Main White Card Wrapper --- */
+    /* (Main White Card Wrapper)
+       I created this wrapper to center all the content and give the page a clean,
+       modern look. The rounded corners and shadow help it stand out from the background. */
     .dashboard-wrapper {
         max-width: 1100px;
         margin: 40px auto;
@@ -30,7 +35,8 @@
         animation: fadeIn 1s ease-out;
     }
 
-    /* --- Title & Date --- */
+    /* (Section Title + Date)
+       This styles the main header "Today's Checklists" + the date below it. */
     .section-title {
         font-size: 34px;
         font-weight: 800;
@@ -45,7 +51,9 @@
         font-weight: 500;
     }
 
-    /* --- Table Styling --- */
+    /* (Table Styling)
+       I wanted the table to look clean and readable. I'm using alternating row colors
+       and hover effects so staff can scan the list quickly. Reference: https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/thead */
     table {
         width: 100%;
         border-collapse: collapse;
@@ -87,7 +95,9 @@
         font-weight: 500;
     }
 
-    /* --- Fill Checklist Button --- */
+    /* (Fill Checklist Button)
+       This is the button staff click to actually open the checklist form.
+       I styled it green to match the theme, and added a small hover animation. */
     .btn-checklist {
         background: #6ed47a;
         color: white;
@@ -109,13 +119,20 @@
 
 {% block content %}
 
+<!-- (Dashboard Container)
+     This holds everything for the staff checklist overview page. -->
 <div class="dashboard-wrapper">
 
-    <!-- Header -->
+    <!-- (Page Header)
+         I show today's date and a simple title so staff immediately know
+         which tasks/checklists they have to complete. -->
     <h2 class="section-title">Today's Checklists</h2>
     <p class="date-label">Date: {{ today }}</p>
 
-    <!-- Table -->
+    <!-- (Checklist Table)
+         This table lists all checklist instances for the day.
+         Each row shows the checklist name, what deli it belongs to,
+         the template used, frequency, and a button to open it. -->
     <table>
         <thead>
             <tr>
@@ -134,6 +151,9 @@
                 <td>{{ instance.deli.deli_name }}</td>
                 <td>{{ instance.checklist.template.name }}</td>
                 <td>{{ instance.checklist.frequency|title }}</td>
+
+                <!-- (Fill Checklist Button)
+                     When staff click this it takes them to the form where they can fill in answers. -->
                 <td>
                     <a href="{% url 'fill_checklist' instance.id %}" class="btn-checklist">
                         Fill Checklist
@@ -142,6 +162,8 @@
             </tr>
 
             {% empty %}
+            <!-- (Empty State)
+                 If no checklists exist today for the staff member I show this message. -->
             <tr>
                 <td colspan="5" class="text-center py-5 text-gray-500">
                     No checklists assigned today.

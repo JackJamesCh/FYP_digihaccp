@@ -4,7 +4,10 @@
 {% block title %}Create Checklist | Digi HACCP{% endblock %}
 
 {% block extra_head %}
-<!-- DaisyUI fieldset styling applies automatically -->
+
+<!-- (Custom Page Styling)
+     I used the same green gradient background and Poppins font
+     to stay consistent with the rest of the manager interface. -->
 <style>
     body {
         background: linear-gradient(135deg, #a8e063, #56ab2f);
@@ -13,6 +16,8 @@
         padding-bottom: 40px;
     }
 
+    /* (Main Form Card)
+       This card wraps the whole form so the page feels centered and tidy. */
     .card-container {
         max-width: 900px;
         margin: 50px auto;
@@ -23,18 +28,19 @@
         animation: fadeIn 0.5s ease-out;
     }
 
-    /* Title reveal animation */
+    /* (Title Animation)
+       I added this because I wanted the title to reveal itself in a subtle way. */
     @keyframes revealLeftToRight {
         0% {
             opacity: 0;
-            clip-path: inset(0 100% 0 0); /* hides everything except left edge */
+            clip-path: inset(0 100% 0 0);
             transform: translateX(-15px);
         }
         60% {
             opacity: 1;
         }
         100% {
-            clip-path: inset(0 0 0 0); /* reveal full title */
+            clip-path: inset(0 0 0 0);
             transform: translateX(0);
         }
     }
@@ -51,6 +57,8 @@
         margin-bottom: 20px;
     }
 
+    /* (Fieldsets)
+       I used DaisyUI’s “fieldset” look to group related items together. Reference: https://daisyui.com/components/fieldset/ */
     .fieldset {
         margin-bottom: 20px;
     }
@@ -67,6 +75,8 @@
         display: block;
     }
 
+    /* (Submit Button)
+       Styled to look strong and confident because this is a key action button. */
     .btn-success {
         border-radius: 12px;
         font-size: 18px;
@@ -75,15 +85,26 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 
+<!-- (Main Form Wrapper)
+     This contains the entire create-checklist form and the animated heading. -->
 <div class="card-container">
+
+    <!-- (Page Title)
+         I animated this so it appears with a little slide reveal. -->
     <h2 class="animated-title">Create New Checklist</h2>
+
+    <!-- (Checklist Form)
+         I used widget_tweaks to add Tailwind/DaisyUI classes to each field. -->
     <form method="POST" class="space-y-6">
         {% csrf_token %}
 
-        <!-- FIELDSET 1: DETAILS -->
+        <!-- (Fieldset 1: Checklist Settings)
+             This section holds the top-level details about which template, which deli and how often the checklist should run. -->
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
+
             <label>Checklist Template</label>
             {{ form.template|add_class:"select select-bordered w-full" }}
 
@@ -97,7 +118,8 @@
             {{ form.title|add_class:"input input-bordered w-full" }}
         </fieldset>
 
-        <!-- FIELDSET 2: ITEMS -->
+        <!-- (Fieldset 2: Bulk Item Paste)
+             I added this feature so managers can quickly paste whole lists of food items instead of adding them one at a time. -->
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
             <legend class="fieldset-legend">Checklist Items</legend>
 
@@ -108,7 +130,9 @@
             {{ form.items_bulk|add_class:"textarea textarea-bordered w-full min-h-[200px]" }}
         </fieldset>
 
-        <!-- BUTTONS -->
+        <!-- (Form Buttons)
+             Primary button = save checklist.
+             Secondary button = go back without saving. -->
         <div class="flex flex-col gap-3">
             <button class="btn btn-success w-full text-white" type="submit">
                 Create Checklist
@@ -118,7 +142,9 @@
                 Cancel
             </a>
         </div>
+
     </form>
+
 </div>
 
 {% endblock %}

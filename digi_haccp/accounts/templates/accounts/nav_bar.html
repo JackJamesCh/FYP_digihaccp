@@ -3,17 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- (Dynamic Page Title)
+       I wrapped the title in a Django block so each page can set its own name.
+       If a page doesn’t specify a title it defaults to “Digi HACCP”. -->
   <title>{% block title %}Digi HACCP{% endblock %}</title>
 
-  <!-- DaisyUI + Tailwind -->
+  <!-- (DaisyUI + Tailwind)
+       I included both because DaisyUI gives me quick UI components,
+       and Tailwind handles all the utility styling behind the scenes. -->
   <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
   <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
 
-  <!-- Poppins font -->
+  <!-- (Poppins Font)
+       I picked this font to give the entire site a clean, modern feel. -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* Default body styling */
+    /* (Default Body Styling)
+       I set a green gradient as the background to match the HACCP branding.
+       I also use flex layout so pages can properly stretch to the bottom. */
     body {
       font-family: "Poppins", sans-serif;
       background: linear-gradient(135deg, #a8e063, #56ab2f);
@@ -23,7 +32,9 @@
       flex-direction: column;
     }
 
-    /* Shared navbar style */
+    /* (Shared Navbar Style)
+       This navbar is used across all pages. I applied a glass-like effect with 
+       backdrop-filter and light shadows. */
     .navbar {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(8px);
@@ -55,41 +66,53 @@
     }
   </style>
 
-  <!-- Allow pages to add their own head content -->
+  <!-- (Extra Head Block)
+       I added this block so individual pages can insert their own scripts or CSS
+       without having to rewrite the whole template. Reference: https://www.w3schools.com/django/ref_tags_block.php -->
   {% block extra_head %}{% endblock %}
   
-  <!-- Allow pages to override body style OUTSIDE the CSS block -->
+  <!-- (Body Style Override)
+       Sometimes pages need to override the default body styling.
+       This block allows that flexibility. -->
   {% block body_style %}{% endblock %}
   
 </head>
 
 <body>
 
-  <!-- NAVBAR -->
- <!-- NAVBAR -->
+  <!-- (Navbar)
+       This navbar changes depending on the user’s role and which page they're on.
+       I added checks so the Dashboard button doesn't show up redundantly when the user is already on their dashboard. -->
 <nav class="navbar">
     <h1>Digi HACCP</h1>
     <div>
         {% if request.user.is_authenticated %}
 
+            <!-- (Manager Dashboard Link)
+                 Only show this link if the logged-in user is a manager and they aren't already on the manager dashboard. -->
             {% if request.user.role == "manager" %}
                 {% if request.path != '/manager-dashboard/' %}
                     <a href="{% url 'manager_dashboard' %}">Dashboard</a>
                 {% endif %}
             {% endif %}
 
+            <!-- (Staff Dashboard Link)
+                 Same logic as above, but for normal staff users. -->
             {% if request.user.role == "staff" %}
                 {% if request.path != '/dashboard/' %}
                     <a href="{% url 'dashboard' %}">Dashboard</a>
                 {% endif %}
             {% endif %}
 
+            <!-- (Logout Button)
+                 I placed logout here so it's always visible when the user is logged in. -->
             <a href="{% url 'logout' %}" class="btn btn-error btn-sm">Logout</a>
         {% endif %}
     </div>
 </nav>
 
-
+  <!-- (Main Content Block)
+       All pages that use this template will insert their main content right here. -->
   {% block content %}{% endblock %}
 
 </body>

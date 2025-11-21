@@ -3,7 +3,15 @@
 {% block title %}Staff Dashboard | Digi HACCP{% endblock %}
 
 {% block extra_head %}
+
+<!-- (Dashboard Styles)
+     I created a soft, clean layout here so staff can quickly see
+     their assigned delis and dashboard actions. -->
 <style>
+
+  /* (Main White Card)
+     I wrapped everything inside a centered card to make the page feel
+     more contained and easier to read. */
   .dashboard-container {
     max-width: 850px;
     margin: 70px auto;
@@ -22,6 +30,8 @@
     margin-bottom: 10px;
   }
 
+  /* (User Info Text)
+     I added space above + softer color to keep it subtle but readable. */
   .user-info {
     color: #555;
     margin-top: 10px;
@@ -29,6 +39,9 @@
     line-height: 1.6;
   }
 
+  /* (Role Badge)
+     This badge quickly tells staff their role using color, just like
+     the manager dashboard. */
   .role-badge {
     display: inline-block;
     background: #17a2b8;
@@ -40,6 +53,9 @@
     text-transform: capitalize;
   }
 
+  /* (Assigned Deli Box)
+     I made this a separate card inside the dashboard so users can
+     easily see which deli locations they belong to. */
   .deli-info {
     background: #f8f8f8;
     border-radius: 12px;
@@ -62,6 +78,9 @@
     margin: 0;
   }
 
+  /* (Button Group)
+     I spaced buttons evenly and allowed wrap so the layout stays clean
+     on smaller screens. */
   .btn-group {
     margin-top: 25px;
     display: flex;
@@ -70,6 +89,8 @@
     flex-wrap: wrap;
   }
 
+  /* (Page Footer)
+     I added a footer just to make the page feel complete. */
   footer {
     text-align: center;
     color: white;
@@ -79,24 +100,38 @@
     opacity: 0.9;
   }
 
+  /* (Fade-in Animation)
+     This fades in the whole dashboard card smoothly. */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* (Mobile Adjustments)
+     I reduced padding for smaller screens to keep everything readable. */
   @media (max-width: 768px) {
     .dashboard-container {
       padding: 30px 20px;
       margin: 40px 15px;
     }
   }
+
 </style>
 {% endblock %}
 
+
 {% block content %}
+  
+  <!-- (Main Dashboard Card)
+       This card contains welcome text, assigned delis and action buttons. -->
   <div class="dashboard-container">
+
+    <!-- (Welcome Heading)
+         I greet the staff user using their email. Reference: https://symbl.cc/en/search/?q=wave -->
     <h2>Welcome, {{ request.user.email }} 👋</h2>
 
+    <!-- (User Details)
+         Shows their role badge so staff instantly know what account type they’re using. -->
     <div class="user-info">
       <p>Your Role:
         <span class="role-badge">
@@ -105,21 +140,32 @@
       </p>
     </div>
 
+    <!-- (Assigned Delis Card)
+         Staff may belong to multiple delis, so I list them all here. -->
     <div class="deli-info">
       <h3>Assigned Deli Location(s)</h3>
       <p>{{ request.user.delis.all|join:", " |default:"No deli assigned" }}</p>
     </div>
 
+    <!-- (Quick Instructions)
+         A little helper sentence to guide staff on what to do next. -->
     <p>Use the options below to manage your HACCP tasks efficiently.</p>
 
+    <!-- (Main Action Buttons)
+         View Checklists → takes staff to today’s checklist list.
+         Record Data (placeholder for your next feature). Help (for future guides or support.) -->
     <div class="btn-group">
       <a href="{% url 'staff_checklists' %}" class="btn btn-primary px-8">View Checklists</a>
       <a href="#" class="btn btn-success px-8">Record Data</a>
       <a href="#" class="btn btn-outline btn-success px-8">Help</a>
     </div>
+
   </div>
 
+  <!-- (Footer)
+       Just a simple footer to make it look profesional. -->
   <footer>
     <p>&copy; 2025 Digi HACCP | All rights reserved</p>
   </footer>
+
 {% endblock %}

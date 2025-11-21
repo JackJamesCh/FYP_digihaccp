@@ -3,11 +3,19 @@
 {% block title %}Manage Delis | Digi HACCP{% endblock %}
 
 {% block extra_head %}
+
+<!-- (UI Frameworks)
+     I added DaisyUI + the Poppins font so the deli management page looks clean,
+     modern, and consistent with all the other manager pages. -->
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
 <script>document.documentElement.setAttribute("data-theme", "pastel");</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
 <style>
+
+  /* (Main Page Background)
+     I kept the green gradient theme to stay consistent across the entire app.
+     Using flex here ensures the footer stays at the bottom. */
   body {
     font-family: "Poppins", sans-serif;
     background: linear-gradient(135deg, #a8e063, #56ab2f);
@@ -17,6 +25,8 @@
     min-height: 100vh;
   }
 
+  /* (Shared Navbar Styling)
+     I copied the navbar style used across other templates so the UI feels seamless. */
   .navbar {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
@@ -48,6 +58,8 @@
     color: #e6ffcc;
   }
 
+  /* (Main Layout Container)
+     This gives the card room to breathe and centers it nicely. */
   main {
     flex-grow: 1;
     display: flex;
@@ -56,6 +68,8 @@
     padding: 60px 20px;
   }
 
+  /* (White Card Container)
+     This is the container for the entire deli management table. */
   .card {
     background: white;
     border-radius: 20px;
@@ -75,6 +89,8 @@
     color: #333;
   }
 
+  /* (Button Animations)
+     I added a small scale effect because it helps buttons feel more interactive. */
   .btn {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -84,6 +100,9 @@
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   }
 
+  /* (Table Styling)
+     This table lists every deli with its ID, name, address, phone and actions.
+     The zebra theme + hover effects help readability a lot. */
   table {
     width: 100%;
     border-collapse: collapse;
@@ -105,6 +124,8 @@
     transition: background 0.2s ease-in-out;
   }
 
+  /* (Alert Styling)
+     This displays messages when delis are added/edited/deleted. */
   .alert {
     border-radius: 10px;
     padding: 12px 15px;
@@ -112,11 +133,15 @@
     font-weight: 500;
   }
 
+  /* (Fade Animation)
+     I added this so the card smoothly appears when the page loads. */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* (Responsive Adjustments)
+     On small screens I reduced padding and stacked the navbar more tightly. */
   @media (max-width: 768px) {
     .card-body {
       padding: 25px;
@@ -135,16 +160,23 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 <main>
+  <!-- (Main Card)
+       This holds all deli management actions: view, edit, delete and add new delis. -->
   <div class="card">
     <div class="card-body">
 
+      <!-- (Page Header)
+           Shows the title and a button to add a new deli. -->
       <div class="flex justify-between items-center mb-6">
         <h2>Manage Delis</h2>
         <a href="{% url 'new_deli' %}" class="btn btn-success btn-lg">+ Add Deli</a>
       </div>
 
+      <!-- (Flash Messages)
+           These show success or error messages after actions like deleting a deli. -->
       {% if messages %}
       <div class="mb-4 space-y-2">
         {% for message in messages %}
@@ -153,6 +185,14 @@
       </div>
       {% endif %}
 
+      <!-- (Delis Table)
+           This table shows:
+             - deli ID
+             - name
+             - address
+             - phone number
+             - edit + delete + view history actions  
+           I wrapped it inside overflow-x-auto to support mobile devices. -->
       <div class="overflow-x-auto">
         <table class="table table-zebra w-full rounded-box">
           <thead>
@@ -168,10 +208,15 @@
           <tbody>
             {% for deli in delis %}
             <tr>
+
+              <!-- (Deli Details) -->
               <td>{{ deli.deli_ID }}</td>
               <td class="font-medium">{{ deli.deli_name }}</td>
               <td>{{ deli.address }}</td>
               <td>{{ deli.phone_number }}</td>
+
+              <!-- (Action Buttons)
+                   Managers can edit, delete, or view the checklist history for each deli. -->
               <td>
                 <div class="flex flex-wrap gap-2">
                   <a href="{% url 'edit_deli' deli.deli_ID %}" class="btn btn-primary btn-sm">Edit</a>
@@ -181,11 +226,15 @@
                   <a href="{% url 'deli_checklist_history' deli.deli_ID %}"
                       class="btn btn-accent btn-sm">
                       View Checklists
-                    </a>
+                  </a>
                 </div>
               </td>
+
             </tr>
+
             {% empty %}
+            <!-- (Empty State)
+                 Shown if no delis exist yet. -->
             <tr>
               <td colspan="5" class="text-center text-gray-500 py-6 italic">No delis found.</td>
             </tr>

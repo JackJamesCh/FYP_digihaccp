@@ -4,6 +4,10 @@
 
 {% block extra_head %}
 <style>
+
+  /* (Dashboard Container)
+     I created this white card layout so the dashboard feels clean and centered.
+     The shadow and rounded corners help it stand out against the green background. */
   .dashboard-container {
     max-width: 900px;
     background: white;
@@ -14,6 +18,8 @@
     animation: fadeIn 0.7s ease-out;
   }
 
+  /* (Header Styling)
+     This section greets the manager and shows their role. */
   .dashboard-header {
     text-align: center;
     margin-bottom: 30px;
@@ -31,11 +37,16 @@
     font-size: 15px;
   }
 
+  /* (Role Highlight)
+     I styled the role label so it pops out a bit. */
   .role {
     color: #2e7d32;
     font-weight: 600;
   }
 
+  /* (Current Date & Time Box)
+     I added this box to show real-time date & time, so managers always know 
+     when they’re viewing the dashboard. */
   .datetime-box {
     background: #e0f7e0;
     border-left: 6px solid #56ab2f;
@@ -49,6 +60,8 @@
     align-items: center;
   }
 
+  /* (Info Section)
+     This holds little “stat cards” that show manager information. */
   .info-section {
     display: flex;
     flex-wrap: wrap;
@@ -57,6 +70,8 @@
     margin-bottom: 35px;
   }
 
+  /* (Info Cards)
+     These cards display mini insights like assigned delis, quick tips, might change in the future. */
   .info-card {
     flex: 1 1 48%;
     background: #f8f8f8;
@@ -84,6 +99,8 @@
     margin: 0;
   }
 
+  /* (Info Value Highlight)
+     This makes important numbers or text stand out inside the cards. */
   .info-value {
     color: #56ab2f;
     font-weight: 700;
@@ -96,6 +113,8 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* (Mobile Responsiveness)
+     I made sure the dashboard adjusts nicely on smaller screens. */
   @media (max-width: 768px) {
     .dashboard-container {
       padding: 25px;
@@ -114,17 +133,26 @@
 {% endblock %}
 
 {% block content %}
+  <!-- (Main Dashboard Card)
+       This holds all the content visible on the manager dashboard. -->
   <div class="dashboard-container">
+
+    <!-- (Welcome Header)
+         Shows the manager’s email and highlights their role. -->
     <div class="dashboard-header">
       <h2>Welcome, {{ request.user.email }}</h2>
       <p>Role: <span class="role">{{ request.user.role|title }}</span></p>
     </div>
 
+    <!-- (Live Date + Time Box)
+         I update this every second with JavaScript below. Reference: https://emojipedia.org/calendar -->
     <div class="datetime-box">
       <span>📅 Current Date & Time</span>
       <span id="datetime"></span>
     </div>
 
+    <!-- (Information Cards Section)
+         These give the manager quick insights about their delis and responsibilities. -->
     <div class="info-section">
       <div class="info-card">
         <h3>Assigned Deli Locations</h3>
@@ -138,6 +166,8 @@
       </div>
     </div>
 
+    <!-- (Quick Action Buttons)
+         I added these buttons so managers can quickly navigate between key pages. -->
     <div class="flex flex-wrap justify-center gap-4 mt-6">
       <a href="{% url 'manage_users' %}" class="btn btn-accent px-8 py-2">Manage Users</a>
       <a href="{% url 'manage_delis' %}" class="btn btn-success px-8 py-2">Manage Delis</a>
@@ -145,6 +175,10 @@
     </div>
   </div>
 
+  <!-- (Live Date-Time Script)
+       This script updates the live date and time every second. 
+       I used toLocaleDateString and toLocaleTimeString to make it auto-format 
+       based on the user’s region. -->
   <script>
     function updateDateTime() {
       const now = new Date();
@@ -161,6 +195,8 @@
       });
       document.getElementById("datetime").textContent = `${dateStr} | ${timeStr}`;
     }
+
+    // Run immediately, then refresh every second.
     updateDateTime();
     setInterval(updateDateTime, 1000);
   </script>
