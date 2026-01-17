@@ -119,6 +119,15 @@
         overflow: hidden;
         box-shadow: 0 12px 30px rgba(0,0,0,0.10);
     }
+
+    #staffInvolved {
+        margin-top: 8px;
+        font-size: 15px;
+        color: #2f5f34;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+
 </style>
 {% endblock %}
 
@@ -179,6 +188,8 @@
          When a manager clicks a row, this will show “Filled by — date/time”. -->
     <h3 id="detailHeader"></h3>
 
+    <div id="staffInvolved"></div>
+
     <!-- (AG Grid Detail Table)
          This is where all checklist responses are displayed dynamically. -->
     <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
@@ -203,15 +214,23 @@ function loadInstance(instanceId) {
             // (Empty Response Handling)
             // If the checklist wasn't filled I show a message instead of a blank grid.
             if (!data.columnDefs || data.columnDefs.length === 0) {
-                document.getElementById("detailHeader").innerText =
-                    "No responses recorded.";
+                document.getElementById("detailHeader").innerText = "No responses recorded.";
+                document.getElementById("staffInvolved").innerText = "";
                 document.getElementById("detailGrid").innerHTML = "";
                 return;
             }
 
             // (Update Header)
             document.getElementById("detailHeader").innerText =
-                `Filled by ${data.filled_by} — ${data.filled_time}`;
+                `Last Updated at: ${data.filled_time}`;
+
+            const staffDiv = document.getElementById("staffInvolved");
+            if (data.staff_involved && data.staff_involved.length > 0) {
+                staffDiv.innerText = `Staff involved: ${data.staff_involved.join(", ")}`;
+            } else {
+                staffDiv.innerText = "";
+            }
+
 
             // (Reset Grid Content)
             const gridDiv = document.getElementById("detailGrid");

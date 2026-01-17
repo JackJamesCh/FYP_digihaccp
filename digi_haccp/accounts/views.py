@@ -372,27 +372,25 @@ def fill_checklist_view(request, instance_id):
 
     locked = instance.is_locked
 
-    # GET OR CREATE RESPONSE
-    # I realized I can't use completed_at__date directly in get_or_create so I first filter the queryset and then either get the first or create one.
+    # GET OR CREATE SHARED RESPONSE (latest / last updated)
     response_qs = ChecklistResponse.objects.filter(
         checklist=instance.checklist,
         deli=instance.deli,
-        completed_by=request.user,
     )
 
-    # For daily checklists, I want only today's response
-    # I used localdate() here based on Django timezone docs:
-    # Reference: https://docs.djangoproject.com/en/5.2/topics/i18n/timezones/
+    # For daily checklists, only use today's response set
     if instance.checklist.frequency == "daily":
         response_qs = response_qs.filter(completed_at__date=localdate())
 
-    response = response_qs.first()
+    # Pick the most recently updated response
+    response = response_qs.order_by("-updated_at", "-completed_at").first()
+
+    # If nothing exists yet, create the first shared response
     if not response:
-        # If no response exists yet I create one for this user / deli / checklist
         response = ChecklistResponse.objects.create(
             checklist=instance.checklist,
             deli=instance.deli,
-            completed_by=request.user
+            completed_by=request.user,  # “created by” the first staff who opens it
         )
 
     # BUILD GRID DATA
@@ -482,7 +480,11 @@ def api_save_field(request):
     # I use get_object_or_404 to ensure these related objects exist or return a 404
     response = get_object_or_404(ChecklistResponse, id=response_id)
     item = get_object_or_404(ChecklistItem, id=item_id)
-    template_field = get_object_or_404(TemplateField, name=field_name)
+    template_field = get_object_or_404(
+        TemplateField,
+        template=response.checklist.template,
+        name=field_name
+    )
 
     # I look up the existing ResponseItem row that matches the response item and template field
     answer = ResponseItem.objects.get(
@@ -516,8 +518,13 @@ def api_save_field(request):
     elif template_field.field_type == "boolean":
         answer.answer_boolean = (value.lower() == "true")
 
+    answer.last_edited_by = request.user
+    answer.last_edited_at = now()
+
     # After updating I save the object to persist the changes
     answer.save()
+    response.save(update_fields=["updated_at"])  # ✅ bumps the "latest" timestamp
+
 
     # I return a simple JSON success response
     return JsonResponse({"success": True})
@@ -566,12 +573,33 @@ def api_manager_instance_detail(request, instance_id):
         completed_at__date=instance.date
     )
 
+    # For now I just take the first response (assuming one per checklist per day)
+    response = responses.order_by("-updated_at", "-completed_at").first()
+
+    edited_users = User.objects.filter(
+        edited_response_items__response=response
+    ).distinct()
+
+    # ✅ collect staff involved: starter + anyone who edited any cell
+    staff_emails = set()
+
+    # starter (who created the response)
+    if response.completed_by_id:
+        staff_emails.add(response.completed_by.email)
+
+    # editors (who changed any cell)
+    edited_emails = ResponseItem.objects.filter(
+        response=response,
+        last_edited_by__isnull=False
+    ).values_list("last_edited_by__email", flat=True).distinct()
+
+    staff_emails.update(edited_emails)
+
+    staff_list = sorted(staff_emails)
+
     # If there is no response I just return empty structures
     if not responses.exists():
         return JsonResponse({"columnDefs": [], "rowData": []})
-
-    # For now I just take the first response (assuming one per checklist per day)
-    response = responses.first()
 
     # I now build the row data for the grid
     row_data = []
@@ -619,5 +647,6 @@ def api_manager_instance_detail(request, instance_id):
         "columnDefs": col_defs,
         "rowData": row_data,
         "filled_by": response.completed_by.email,
-        "filled_time": response.completed_at.strftime("%d %b %Y, %H:%M")
+        "filled_time": response.completed_at.strftime("%d %b %Y, %H:%M"),
+        "staff_involved": staff_list,
     })

@@ -166,6 +166,7 @@ class ChecklistResponse(models.Model):
     deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
     completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="checklist_responses")
     completed_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # ✅ add this
 
     def __str__(self):
         return f"Response to {self.checklist} by {self.completed_by.email}"
@@ -208,6 +209,12 @@ class ResponseItem(models.Model):
     answer_number = models.IntegerField(null=True, blank=True)
     answer_boolean = models.BooleanField(null=True, blank=True)
     answer_time = models.TimeField(null=True, blank=True)
+
+    last_edited_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="edited_response_items"
+    )
+    last_edited_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.checklist_item} — {self.template_field.label}"
