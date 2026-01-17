@@ -99,6 +99,7 @@ class TemplateField(models.Model):
     FIELD_TYPES = [
         ('text', 'Text'),
         ('date', 'Date'),
+        ('time', 'Time'),
         ('datetime', 'Date & Time'),
         ('decimal', 'Decimal Number'),
         ('number', 'Whole Number'),
@@ -206,6 +207,7 @@ class ResponseItem(models.Model):
     answer_decimal = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     answer_number = models.IntegerField(null=True, blank=True)
     answer_boolean = models.BooleanField(null=True, blank=True)
+    answer_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.checklist_item} — {self.template_field.label}"

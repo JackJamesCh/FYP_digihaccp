@@ -4,7 +4,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
 from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
-from datetime import date
+from datetime import date, datetime
+
 from .models import (
     Deli,
     User,
@@ -422,6 +423,8 @@ def fill_checklist_view(request, instance_id):
                 value = answer.answer_text
             elif field.field_type == "date":
                 value = answer.answer_date.isoformat() if answer.answer_date else ""
+            elif field.field_type == "time":
+                value = answer.answer_time.strftime("%H:%M") if answer.answer_time else ""
             elif field.field_type == "datetime":
                 value = answer.answer_datetime.isoformat() if answer.answer_datetime else ""
             elif field.field_type == "decimal":
@@ -497,6 +500,15 @@ def api_save_field(request):
         answer.answer_date = value or None
     elif template_field.field_type == "datetime":
         answer.answer_datetime = value or None
+    elif template_field.field_type == "time":
+        # Expect "HH:MM"
+        if value:
+            try:
+                answer.answer_time = datetime.strptime(value, "%H:%M").time()
+            except ValueError:
+                return JsonResponse({"error": "Invalid time format. Use HH:MM"}, status=400)
+        else:
+            answer.answer_time = None
     elif template_field.field_type == "decimal":
         answer.answer_decimal = value or None
     elif template_field.field_type == "number":
@@ -579,6 +591,7 @@ def api_manager_instance_detail(request, instance_id):
                 value = (
                     answer.answer_text or
                     answer.answer_date or
+                    (answer.answer_time.strftime("%H:%M") if answer.answer_time else None) or
                     answer.answer_datetime or
                     answer.answer_decimal or
                     answer.answer_number or
