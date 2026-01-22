@@ -41,15 +41,20 @@
         margin-bottom: 25px;
     }
 
-    /* (Table Styling)
-       This table lists every instance of the checklist (one per day).
-       I used alternating row colors and subtle hover scaling to make
-       it feel more interactive and easy to read. */
+    /* (Scrollable Table Wrapper)
+       This allows only the checklist rows to scroll while keeping the header fixed. */
+    .table-scroll {
+        max-height: 260px;
+        overflow-y: auto;
+        border-radius: 15px;
+        border: 1px solid #e1f1e1;
+    }
+
+    /* (Table Base Styling) */
     table {
         width: 100%;
         border-collapse: collapse;
-        border-radius: 15px;
-        overflow: hidden;
+        table-layout: fixed;
     }
 
     thead {
@@ -61,7 +66,6 @@
     }
 
     thead th {
-        padding: 14px;
         font-weight: 700;
         border-bottom: 2px solid #d6ead6;
     }
@@ -77,11 +81,29 @@
         transform: scale(1.01);
     }
 
-    td {
+    /* (Flex Row Layout)
+       This ensures header and body columns stay perfectly aligned. */
+    thead tr,
+    tbody tr {
+        display: flex;
+        width: 100%;
+    }
+
+    th, td {
+        display: flex;
+        align-items: center;
         padding: 14px;
+        box-sizing: border-box;
         font-size: 16px;
         color: #333;
     }
+
+    /* (Column Width Control)
+       These values control spacing consistency across header + rows. */
+    th:nth-child(1), td:nth-child(1) { flex: 3; }
+    th:nth-child(2), td:nth-child(2) { flex: 2; }
+    th:nth-child(3), td:nth-child(3) { flex: 1; }
+    th:nth-child(4), td:nth-child(4) { flex: 1; justify-content: center; }
 
     /* (View Button)
        This button loads the AG Grid for the selected instance.
@@ -111,6 +133,14 @@
         color: #266b30;
     }
 
+    #staffInvolved {
+        margin-top: 8px;
+        font-size: 15px;
+        color: #2f5f34;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+
     /* (AG Grid Container)
        I added shadow + rounding so the AG grid blends with the rest of the design. */
     #detailGrid {
@@ -120,17 +150,8 @@
         box-shadow: 0 12px 30px rgba(0,0,0,0.10);
     }
 
-    #staffInvolved {
-        margin-top: 8px;
-        font-size: 15px;
-        color: #2f5f34;
-        font-weight: 600;
-        opacity: 0.9;
-    }
-
 </style>
 {% endblock %}
-
 
 {% block content %}
 
@@ -150,69 +171,53 @@
         Checklist History — {{ deli.deli_name }}
     </h2>
 
-    <!-- (Summary Table)
-         This table lists every daily instance of every checklist for this deli.
-         Managers can click "View" to load details in the AG Grid below. -->
-    <table>
-        <thead>
-            <tr>
-                <th>Checklist</th>
-                <th>Date</th>
-                <th>Locked?</th>
-                <th>Open</th>
-            </tr>
-        </thead>
+    <!-- (Summary Table) -->
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Checklist</th>
+                    <th>Date</th>
+                    <th>Locked?</th>
+                    <th>Open</th>
+                </tr>
+            </thead>
 
-        <tbody>
-            {% for instance in instances %}
-            <tr>
-                <td>{{ instance.checklist.title }}</td>
-                <td>{{ instance.date }}</td>
-                <td>{% if instance.is_locked %}Yes{% else %}No{% endif %}</td>
+            <tbody>
+                {% for instance in instances %}
+                <tr>
+                    <td>{{ instance.checklist.title }}</td>
+                    <td>{{ instance.date }}</td>
+                    <td>{% if instance.is_locked %}Yes{% else %}No{% endif %}</td>
+                    <td>
+                        <button class="btn-view" onclick="loadInstance({{ instance.id }})">
+                            View
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-                <!-- (Load AG Grid Button)
-                     Clicking this button loads the full checklist responses for that day. (Not sure what is wrong in this section will fix in iteration3) -->
-                <td>
-                    <button 
-                        class="btn-view"
-                        onclick="loadInstance({{ instance.id }})">
-                        View
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- (Detail Header)
-         When a manager clicks a row, this will show “Filled by — date/time”. -->
+    <!-- (Detail Header) -->
     <h3 id="detailHeader"></h3>
-
     <div id="staffInvolved"></div>
 
-    <!-- (AG Grid Detail Table)
-         This is where all checklist responses are displayed dynamically. -->
+    <!-- (AG Grid Detail Table) -->
     <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
 
 </div>
 
-
 <script>
 
-/* (Global Grid Variable)
-   I store the grid instance here so I can recreate or update it later. */
 let detailGrid = null;
 
-/* (Load Instance Function)
-   This function fetches the completed checklist data from the backend and
-   builds the AG Grid with the correct column definitions + row data. */
 function loadInstance(instanceId) {
     fetch(`/manager/checklist/instance/${instanceId}/data/`)
         .then(res => res.json())
         .then(data => {
 
-            // (Empty Response Handling)
-            // If the checklist wasn't filled I show a message instead of a blank grid.
             if (!data.columnDefs || data.columnDefs.length === 0) {
                 document.getElementById("detailHeader").innerText = "No responses recorded.";
                 document.getElementById("staffInvolved").innerText = "";
@@ -220,26 +225,17 @@ function loadInstance(instanceId) {
                 return;
             }
 
-            // (Update Header)
             document.getElementById("detailHeader").innerText =
                 `Last Updated at: ${data.filled_time}`;
 
             const staffDiv = document.getElementById("staffInvolved");
-            if (data.staff_involved && data.staff_involved.length > 0) {
-                staffDiv.innerText = `Staff involved: ${data.staff_involved.join(", ")}`;
-            } else {
-                staffDiv.innerText = "";
-            }
+            staffDiv.innerText = data.staff_involved?.length
+                ? `Staff involved: ${data.staff_involved.join(", ")}`
+                : "";
 
+            document.getElementById("detailGrid").innerHTML = "";
 
-            // (Reset Grid Content)
-            const gridDiv = document.getElementById("detailGrid");
-            gridDiv.innerHTML = "";
-
-            /* (Create AG Grid)
-               AG Grid V32+ uses createGrid instead of new Grid().
-               I pass in the column definitions + row data returned from the backend. */
-            detailGrid = agGrid.createGrid(gridDiv, {
+            detailGrid = agGrid.createGrid(document.getElementById("detailGrid"), {
                 columnDefs: data.columnDefs,
                 rowData: data.rowData,
                 defaultColDef: {
