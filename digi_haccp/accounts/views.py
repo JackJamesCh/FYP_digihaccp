@@ -378,14 +378,14 @@ def fill_checklist_view(request, instance_id):
         deli=instance.deli,
     )
 
-    # For daily checklists, only use today's response set
+    # For daily checklists only use today's response set
     if instance.checklist.frequency == "daily":
         response_qs = response_qs.filter(completed_at__date=localdate())
 
     # Pick the most recently updated response
     response = response_qs.order_by("-updated_at", "-completed_at").first()
 
-    # If nothing exists yet, create the first shared response
+    # If nothing exists yet create the first shared response
     if not response:
         response = ChecklistResponse.objects.create(
             checklist=instance.checklist,
@@ -503,7 +503,7 @@ def api_save_field(request):
     elif template_field.field_type == "datetime":
         answer.answer_datetime = value or None
     elif template_field.field_type == "time":
-        # Expect "HH:MM"
+        # Expect "HH:MM" Reference: https://www.geeksforgeeks.org/python/convert-datetime-string-to-yyyy-mm-dd-hhmmss-format-in-python/
         if value:
             try:
                 answer.answer_time = datetime.strptime(value, "%H:%M").time()
@@ -523,7 +523,7 @@ def api_save_field(request):
 
     # After updating I save the object to persist the changes
     answer.save()
-    response.save(update_fields=["updated_at"])  # ✅ bumps the "latest" timestamp
+    response.save(update_fields=["updated_at"])  # the "latest" timestamp
 
 
     # I return a simple JSON success response
@@ -580,7 +580,7 @@ def api_manager_instance_detail(request, instance_id):
         edited_response_items__response=response
     ).distinct()
 
-    # ✅ collect staff involved: starter + anyone who edited any cell
+    # collect staff involved: starter + anyone who edited any cell
     staff_emails = set()
 
     # starter (who created the response)

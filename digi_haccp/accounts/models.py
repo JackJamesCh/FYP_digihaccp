@@ -166,7 +166,7 @@ class ChecklistResponse(models.Model):
     deli = models.ForeignKey(Deli, on_delete=models.CASCADE)
     completed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="checklist_responses")
     completed_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # ✅ add this
+    updated_at = models.DateTimeField(auto_now=True) 
 
     def __str__(self):
         return f"Response to {self.checklist} by {self.completed_by.email}"
