@@ -450,6 +450,7 @@ def fill_checklist_view(request, instance_id):
             "headerName": field.label,
             "field": field.name,
             "editable": not locked,
+            "fieldType": field.field_type,
         })
 
     # RETURN JSON SAFELY TO TEMPLATE

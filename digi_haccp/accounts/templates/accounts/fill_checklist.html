@@ -186,9 +186,42 @@
     const locked = {{ locked|yesno:"true,false" }} === "true";
     const responseId = "{{ response_id }}";
 
+    /* (Time Selector Editor)
+       Uses a native time input so staff can pick HH:MM values easily. */
+    function TimeEditor() {}
+
+    TimeEditor.prototype.init = function(params) {
+        this.eInput = document.createElement("input");
+        this.eInput.type = "time";
+        this.eInput.classList.add("ag-input");
+        this.eInput.value = params.value || "";
+        this.eInput.step = 60;
+    };
+
+    TimeEditor.prototype.getGui = function() {
+        return this.eInput;
+    };
+
+    TimeEditor.prototype.afterGuiAttached = function() {
+        this.eInput.focus();
+        this.eInput.select();
+    };
+
+    TimeEditor.prototype.getValue = function() {
+        return this.eInput.value;
+    };
+
     /* (Hidden ID Column)
        I add the hidden ID column first so each row knows which item it belongs to. */
     columnDefs.unshift({ field: "item_id", hide: true, editable: false });
+
+    /* (Apply Time Editor)
+       Wire the time picker to any column with fieldType === "time". */
+    columnDefs.forEach((colDef) => {
+        if (colDef.fieldType === "time") {
+            colDef.cellEditor = TimeEditor;
+        }
+    });
 
     /* (AG Grid Options)
        I configured the grid to auto-save when users edit fields.
@@ -196,6 +229,9 @@
     const gridOptions = {
         columnDefs,
         rowData,
+        components: {
+            TimeEditor,
+        },
         defaultColDef: {
             resizable: true,
             sortable: true,
