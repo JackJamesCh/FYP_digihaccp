@@ -158,6 +158,8 @@
             Please fill in each required field. All changes save automatically.
         </p>
 
+        {% include "accounts/alert.html" %}
+
         <div class="divider-line"></div>
 
         <!-- AG Grid Table -->
@@ -185,6 +187,7 @@
     const rowData = {{ row_data_json|safe }};
     const locked = {{ locked|yesno:"true,false" }} === "true";
     const responseId = "{{ response_id }}";
+
 
     /* (Time Selector Editor)
        Uses a native time input so staff can pick HH:MM values easily. */
@@ -258,6 +261,81 @@
         }
     });
 
+    const alertContainer = document.getElementById("alert-container");
+    const alertBox = document.getElementById("alert-box");
+    const alertIconPath = document.getElementById("alert-icon-path");
+    const alertMessage = document.getElementById("alert-message");
+
+    const alertConfig = {
+        error: {
+            className: "alert-error",
+            iconPath: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+        },
+        success: {
+            className: "alert-success",
+            iconPath: "M9 12l2 2 4-4m7 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        },
+        warning: {
+            className: "alert-warning",
+            iconPath: "M12 9v2m0 4h.01m6.938 4h-13.856c-1.54 0-2.502-1.667-1.732-3l6.928-12c.77-1.333 2.694-1.333 3.464 0l6.928 12c.77 1.333-.192 3-1.732 3z"
+        }
+    };
+
+    function showAlert(message, type = "error") {
+        if (!alertContainer || !alertBox || !alertMessage || !alertIconPath) {
+            alert(message);
+            return;
+        }
+
+        const config = alertConfig[type] || alertConfig.error;
+        alertBox.classList.remove("alert-error", "alert-success", "alert-warning");
+        alertBox.classList.add(config.className);
+        alertIconPath.setAttribute("d", config.iconPath);
+        alertMessage.textContent = message;
+
+        alertContainer.classList.remove("hidden");
+
+        setTimeout(() => {
+            alertContainer.classList.add("hidden");
+        }, 6000);
+    }
+
+    function sendSaveRequest({ itemId, field, value, onSuccess, onFailure }) {
+        fetch("{% url 'api_save_field' %}", {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                response_id: responseId,
+                item_id: itemId,
+                field,
+                value
+            })
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    return response.json().then((data) => {
+                        throw new Error(data.error || "Unable to save changes.");
+                    });
+                }
+                return response.json();
+            })
+            .then(() => {
+                if (onSuccess) {
+                    onSuccess();
+                }
+            })
+            .catch((error) => {
+                if (onFailure) {
+                    onFailure(error);
+                } else {
+                    showAlert(error.message);
+                }
+            });
+    }
+
     /* (AG Grid Options)
        I configured the grid to auto-save when users edit fields.
        If the checklist is locked, editing is disabled. */
@@ -287,18 +365,14 @@
             // avoid saving non-editable columns
             if (field === "item_id" || field === "item_name") return;
 
-            fetch("{% url 'api_save_field' %}", {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                    response_id: responseId,
-                    item_id: event.data.item_id,
-                    field,
-                    value: event.newValue
-                })
+            sendSaveRequest({
+                itemId: event.data.item_id,
+                field,
+                value: event.newValue,
+                onFailure: (error) => {
+                    event.node.setDataValue(field, event.oldValue ?? "");
+                    showAlert(error.message);
+                }
             });
         }
     };

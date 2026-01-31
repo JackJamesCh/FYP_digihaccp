@@ -19,6 +19,7 @@ from .models import (
 from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse
 from django.utils.timezone import now, localdate
+from decimal import Decimal, InvalidOperation
 import json
 
 
@@ -523,9 +524,39 @@ def api_save_field(request):
         else:
             answer.answer_time = None
     elif template_field.field_type == "decimal":
-        answer.answer_decimal = value or None
+        if value:
+            try:
+                decimal_value = Decimal(value)
+            except InvalidOperation:
+                return JsonResponse({"error": "Please enter a valid number."}, status=400)
+
+            if template_field.name == "core_temp":
+                if decimal_value < Decimal("75") or decimal_value > Decimal("100"):
+                    return JsonResponse(
+                        {"error": "Core temperature must be between 75 and 100."},
+                        status=400
+                    )
+
+            answer.answer_decimal = decimal_value
+        else:
+            answer.answer_decimal = None
     elif template_field.field_type == "number":
-        answer.answer_number = int(value) if value else None
+        if value:
+            try:
+                number_value = int(value)
+            except ValueError:
+                return JsonResponse({"error": "Please enter a whole number."}, status=400)
+
+            if template_field.name == "core_temp":
+                if number_value < 75 or number_value > 100:
+                    return JsonResponse(
+                        {"error": "Core temperature must be between 75 and 100."},
+                        status=400
+                    )
+
+            answer.answer_number = number_value
+        else:
+            answer.answer_number = None
     elif template_field.field_type == "boolean":
         answer.answer_boolean = (value.lower() == "true")
 
