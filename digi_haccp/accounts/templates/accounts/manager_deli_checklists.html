@@ -41,69 +41,39 @@
         margin-bottom: 25px;
     }
 
-    /* (Scrollable Table Wrapper)
-       This allows only the checklist rows to scroll while keeping the header fixed. */
-    .table-scroll {
-        max-height: 260px;
-        overflow-y: auto;
-        border-radius: 15px;
-        border: 1px solid #e1f1e1;
+    /* (Summary Grid Container)
+       This replaces the legacy HTML table with AG Grid for filtering and sorting. */
+    #summaryGrid {
+        margin-top: 10px;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 30px rgba(22, 104, 54, 0.12);
+        border: 1px solid #e3f2e3;
     }
 
-    /* (Table Base Styling) */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
+    #summaryGrid .ag-root-wrapper {
+        border: none;
     }
 
-    thead {
+    #summaryGrid .ag-header {
         background: #e8f6e8;
         color: #266b30;
-        text-transform: uppercase;
-        font-size: 14px;
-        letter-spacing: 0.5px;
-    }
-
-    thead th {
         font-weight: 700;
-        border-bottom: 2px solid #d6ead6;
+        border-bottom: 1px solid #d6ead6;
     }
 
-    tbody tr {
-        border-bottom: 1px solid #eee;
-        background: #fff;
-        transition: 0.2s ease-in-out;
+    #summaryGrid .ag-row {
+        font-size: 15px;
     }
 
-    tbody tr:hover {
-        background: #f5fcf5;
-        transform: scale(1.01);
+    #summaryGrid .ag-row:hover {
+        background: #f4fbf4;
     }
 
-    /* (Flex Row Layout)
-       This ensures header and body columns stay perfectly aligned. */
-    thead tr,
-    tbody tr {
-        display: flex;
-        width: 100%;
-    }
-
-    th, td {
+    #summaryGrid .ag-cell {
         display: flex;
         align-items: center;
-        padding: 14px;
-        box-sizing: border-box;
-        font-size: 16px;
-        color: #333;
     }
-
-    /* (Column Width Control)
-       These values control spacing consistency across header + rows. */
-    th:nth-child(1), td:nth-child(1) { flex: 3; }
-    th:nth-child(2), td:nth-child(2) { flex: 2; }
-    th:nth-child(3), td:nth-child(3) { flex: 1; }
-    th:nth-child(4), td:nth-child(4) { flex: 1; justify-content: center; }
 
     /* (View Button)
        This button loads the AG Grid for the selected instance.
@@ -147,7 +117,19 @@
         margin-top: 15px;
         border-radius: 18px;
         overflow: hidden;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+        box-shadow: 0 12px 30px rgba(22, 104, 54, 0.12);
+        border: 1px solid #e3f2e3;
+    }
+
+    #detailGrid .ag-root-wrapper {
+        border: none;
+    }
+
+    #detailGrid .ag-header {
+        background: #e8f6e8;
+        color: #266b30;
+        font-weight: 700;
+        border-bottom: 1px solid #d6ead6;
     }
 
 </style>
@@ -171,34 +153,21 @@
         Checklist History — {{ deli.deli_name }}
     </h2>
 
-    <!-- (Summary Table) -->
-    <div class="table-scroll">
-        <table>
-            <thead>
-                <tr>
-                    <th>Checklist</th>
-                    <th>Date</th>
-                    <th>Locked?</th>
-                    <th>Open</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for instance in instances %}
-                <tr>
-                    <td>{{ instance.checklist.title }}</td>
-                    <td>{{ instance.date }}</td>
-                    <td>{% if instance.is_locked %}Yes{% else %}No{% endif %}</td>
-                    <td>
-                        <button class="btn-view" onclick="loadInstance({{ instance.id }})">
-                            View
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <!-- (Summary Grid) -->
+    <div
+        id="summaryGrid"
+        class="ag-theme-alpine"
+        style="height: 320px; width: 100%;"
+        data-row-data='[
+            {% for instance in instances %}
+            {
+                "checklist": "{{ instance.checklist.title|escapejs }}",
+                "date": "{{ instance.date }}",
+                "instanceId": {{ instance.id }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]'
+    ></div>
 
     <!-- (Detail Header) -->
     <h3 id="detailHeader"></h3>
@@ -212,6 +181,85 @@
 <script>
 
 let detailGrid = null;
+let summaryGrid = null;
+
+const summaryColumnDefs = [
+    {
+        headerName: "Checklist",
+        field: "checklist",
+        flex: 3,
+        filter: "agTextColumnFilter",
+        floatingFilter: true
+    },
+    {
+        headerName: "Date",
+        field: "date",
+        flex: 2,
+        filter: "agDateColumnFilter",
+        floatingFilter: true,
+        filterParams: {
+            comparator: (filterLocalDateAtMidnight, cellValue) => {
+                if (!cellValue) {
+                    return 0;
+                }
+
+                const parsed = new Date(cellValue);
+                if (Number.isNaN(parsed.getTime())) {
+                    return 0;
+                }
+
+                const cellDate = new Date(
+                    parsed.getFullYear(),
+                    parsed.getMonth(),
+                    parsed.getDate()
+                );
+
+                if (cellDate < filterLocalDateAtMidnight) {
+                    return -1;
+                }
+
+                if (cellDate > filterLocalDateAtMidnight) {
+                    return 1;
+                }
+
+                return 0;
+            }
+        }
+    },
+    {
+        headerName: "Open",
+        field: "instanceId",
+        flex: 1,
+        sortable: false,
+        filter: false,
+        cellRenderer: (params) => {
+            const button = document.createElement("button");
+            button.className = "btn-view";
+            button.innerText = "View";
+            button.addEventListener("click", () => loadInstance(params.value));
+            return button;
+        }
+    }
+];
+
+document.addEventListener("DOMContentLoaded", () => {
+    const summaryGridElement = document.getElementById("summaryGrid");
+    const summaryRowData = JSON.parse(summaryGridElement.dataset.rowData || "[]");
+
+    summaryGrid = agGrid.createGrid(summaryGridElement, {
+        columnDefs: summaryColumnDefs,
+        rowData: summaryRowData,
+        defaultColDef: {
+            resizable: true,
+            sortable: true,
+            filter: true
+        },
+        suppressCellFocus: true,
+        rowHeight: 48,
+        headerHeight: 42,
+        animateRows: true
+    });
+});
 
 function loadInstance(instanceId) {
     fetch(`/manager/checklist/instance/${instanceId}/data/`)
