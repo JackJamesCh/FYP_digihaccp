@@ -211,6 +211,38 @@
         return this.eInput.value;
     };
 
+    /* (Date Selector Editor)
+       Uses a native date input. If the column is use_by_date, block past dates. */
+    function DateEditor() {}
+
+    DateEditor.prototype.init = function(params) {
+        this.eInput = document.createElement("input");
+        this.eInput.type = "date";
+        this.eInput.classList.add("ag-input");
+        this.eInput.value = params.value || "";
+
+        if (params.colDef && params.colDef.field === "use_by_date") {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, "0");
+            const dd = String(today.getDate()).padStart(2, "0");
+            this.eInput.min = `${yyyy}-${mm}-${dd}`;
+        }
+    };
+
+    DateEditor.prototype.getGui = function() {
+        return this.eInput;
+    };
+
+    DateEditor.prototype.afterGuiAttached = function() {
+        this.eInput.focus();
+        this.eInput.select();
+    };
+
+    DateEditor.prototype.getValue = function() {
+        return this.eInput.value;
+    };
+
     /* (Hidden ID Column)
        I add the hidden ID column first so each row knows which item it belongs to. */
     columnDefs.unshift({ field: "item_id", hide: true, editable: false });
@@ -220,6 +252,9 @@
     columnDefs.forEach((colDef) => {
         if (colDef.fieldType === "time") {
             colDef.cellEditor = TimeEditor;
+        }
+        if (colDef.fieldType === "date") {
+            colDef.cellEditor = DateEditor;
         }
     });
 
@@ -231,6 +266,7 @@
         rowData,
         components: {
             TimeEditor,
+            DateEditor,
         },
         defaultColDef: {
             resizable: true,

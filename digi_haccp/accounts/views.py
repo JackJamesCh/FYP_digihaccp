@@ -499,8 +499,18 @@ def api_save_field(request):
     if template_field.field_type == "text":
         answer.answer_text = value
     elif template_field.field_type == "date":
-        # In a more advanced version I might parse the date string properly here.
-        answer.answer_date = value or None
+        if value:
+            try:
+                parsed_date = datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+
+            if template_field.name == "use_by_date" and parsed_date < localdate():
+                return JsonResponse({"error": "Use-by date cannot be in the past."}, status=400)
+
+            answer.answer_date = parsed_date
+        else:
+            answer.answer_date = None
     elif template_field.field_type == "datetime":
         answer.answer_datetime = value or None
     elif template_field.field_type == "time":
