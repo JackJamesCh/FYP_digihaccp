@@ -24,7 +24,10 @@ SECRET_KEY = 'django-insecure-9u$s3b2(%d#x%*sgu=!*@x*5u-*%4@tb69e17=#vrrl&vsoti_
 DEBUG = True
 
 # ALLOWED_HOSTS defines which domains or IPs can access my app
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv(
+    "ALLOWED_HOSTS",
+    "fyp-digihaccp.onrender.com,localhost,127.0.0.1",
+).split(",")
 
 # INSTALLED APPS
 INSTALLED_APPS = [
