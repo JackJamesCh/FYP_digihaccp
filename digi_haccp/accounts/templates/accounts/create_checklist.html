@@ -106,7 +106,7 @@
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
 
             <label>Checklist Template</label>
-            {{ form.template|add_class:"select select-bordered w-full" }}
+            {{ form.template|add_class:"select select-bordered w-full"|attr:"id:checklist-template" }}
 
             <label>Deli</label>
             {{ form.deli|add_class:"select select-bordered w-full" }}
@@ -123,11 +123,11 @@
         <fieldset class="fieldset bg-base-200 border-base-300 rounded-box border p-6">
             <legend class="fieldset-legend">Checklist Items</legend>
 
-            <p class="text-sm text-gray-600 mb-2">
+            <p id="items-bulk-help" class="text-sm text-gray-600 mb-2">
                 Paste your item names — <strong>one per line</strong>.
             </p>
 
-            {{ form.items_bulk|add_class:"textarea textarea-bordered w-full min-h-[200px]" }}
+            {{ form.items_bulk|add_class:"textarea textarea-bordered w-full min-h-[200px]"|attr:"id:items-bulk-input" }}
         </fieldset>
 
         <!-- (Form Buttons)
@@ -146,5 +146,34 @@
     </form>
 
 </div>
+
+<script>
+    const templateSelect = document.getElementById("checklist-template");
+    const itemsBulkInput = document.getElementById("items-bulk-input");
+    const itemsBulkHelp = document.getElementById("items-bulk-help");
+
+    const defaultHelp = "Paste your item names — <strong>one per line</strong>.";
+    const cleaningHelp = "Paste your items/areas — <strong>one per line</strong>. Use <strong>Area | Chemical</strong> to set the chemical used.";
+    const defaultPlaceholder = "Paste food items here, one per line...";
+    const cleaningPlaceholder = "Paste items/areas here (use 'Area | Chemical' if needed), one per line...";
+
+    function updateItemsBulkHelp() {
+        if (!templateSelect) return;
+        const selectedText = templateSelect.options[templateSelect.selectedIndex]?.textContent || "";
+        const isCleaning = selectedText.toLowerCase().includes("cleaning record");
+
+        if (itemsBulkHelp) {
+            itemsBulkHelp.innerHTML = isCleaning ? cleaningHelp : defaultHelp;
+        }
+        if (itemsBulkInput) {
+            itemsBulkInput.placeholder = isCleaning ? cleaningPlaceholder : defaultPlaceholder;
+        }
+    }
+
+    if (templateSelect) {
+        templateSelect.addEventListener("change", updateItemsBulkHelp);
+        updateItemsBulkHelp();
+    }
+</script>
 
 {% endblock %}

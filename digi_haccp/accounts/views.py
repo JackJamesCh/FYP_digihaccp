@@ -233,10 +233,18 @@ def create_checklist(request):
             lines = [line.strip() for line in pasted_items.split("\n") if line.strip()]
             order = 1
             for line in lines:
+                name = line
+                chemical_used = ""
+                if "|" in line:
+                    name_part, chemical_part = line.split("|", 1)
+                    name = name_part.strip()
+                    chemical_used = chemical_part.strip()
+
                 ChecklistItem.objects.create(
                     checklist=checklist,
-                    name=line,
-                    order=order
+                    name=name,
+                    chemical_used=chemical_used,
+                    order=order,
                 )
                 order += 1
 
@@ -279,7 +287,10 @@ def api_get_checklist_data(request, pk):
         row = {"item_name": i.name}
         # For each template field, I start with an empty value to be filled later
         for field in template_fields:
-            row[field.name] = ""
+            if field.name == "chemical_used":
+                row[field.name] = i.chemical_used
+            else:
+                row[field.name] = ""
         row_data.append(row)
 
     # Finally, I return all this as JSON so the frontend can render a dynamic grid.
@@ -433,6 +444,9 @@ def fill_checklist_view(request, instance_id):
             elif field.field_type == "boolean":
                 value = bool(answer.answer_boolean)
 
+            if field.name == "chemical_used":
+                value = item.chemical_used
+
             row[field.name] = value
 
         row_data.append(row)
@@ -447,10 +461,14 @@ def fill_checklist_view(request, instance_id):
 
     # For each template field, I create a column that is editable unless the instance is locked
     for field in fields:
+        is_editable = not locked
+        if field.name == "chemical_used":
+            is_editable = False
+
         col_defs.append({
             "headerName": field.label,
             "field": field.name,
-            "editable": not locked,
+            "editable": is_editable,
             "fieldType": field.field_type,
         })
 
@@ -494,6 +512,10 @@ def api_save_field(request):
         checklist_item=item,
         template_field=template_field
     )
+
+    # Prevent edits to read-only fields
+    if template_field.name == "chemical_used":
+        return JsonResponse({"error": "Chemical Used is read-only."}, status=400)
 
     # I now update the correct field on the ResponseItem based on the field type.
     # This is a common pattern when handling dynamic form-like data.
@@ -670,6 +692,9 @@ def api_manager_instance_detail(request, instance_id):
             except ResponseItem.DoesNotExist:
                 # If there is no response for that item/field I just leave it empty
                 value = ""
+
+            if field.name == "chemical_used":
+                value = item.chemical_used
 
             row[field.name] = value
         row_data.append(row)

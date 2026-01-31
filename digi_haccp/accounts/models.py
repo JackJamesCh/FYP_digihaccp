@@ -152,6 +152,7 @@ class Checklist(models.Model):
 class ChecklistItem(models.Model):
     checklist = models.ForeignKey(Checklist, on_delete=models.CASCADE, related_name="items")
     name = models.CharField(max_length=255)
+    chemical_used = models.CharField(max_length=255, blank=True)
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):
