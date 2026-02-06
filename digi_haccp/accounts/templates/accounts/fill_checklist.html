@@ -261,6 +261,7 @@
         }
     });
 
+    /*Reference: https://daisyui.com/components/alert/?lang=en */
     const alertContainer = document.getElementById("alert-container");
     const alertBox = document.getElementById("alert-box");
     const alertIconPath = document.getElementById("alert-icon-path");
@@ -362,7 +363,7 @@
 
             const field = event.colDef.field;
 
-            // avoid saving non-editable columns
+            // avoid saving non-editable columns. Reference:https://stackoverflow.com/questions/62915576/angular-ag-grid-has-anyone-figured-out-a-way-to-wait-for-a-cell-node-update-to
             if (field === "item_id" || field === "item_name") return;
 
             sendSaveRequest({
