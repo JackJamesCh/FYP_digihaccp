@@ -1,43 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Checklist Created</title>
+{% extends "accounts/nav_bar.html" %}
 
-    <!-- (DaisyUI Import)
-         I added DaisyUI here because it gives me access to nice button + card styles quickly
-         without writing too much custom CSS. -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+{% block title %}Checklist Created | Digi HACCP{% endblock %}
 
-    <script>
-        /* (Theme Setup)
-           I manually set the theme instead of using config, because this is just a small success page. */
-        document.documentElement.setAttribute('data-theme', 'pastel');
-    </script>
-</head>
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.css" rel="stylesheet" />
+<script>document.documentElement.setAttribute('data-theme', 'pastel');</script>
+<style>
+    .success-page-wrap {
+        min-height: calc(100vh - 84px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+    }
 
-<!-- (Background Wrapper)
-     I used the green background here to keep the look consistent with the rest of the checklist creation flow. -->
-<body class="bg-green-200 min-h-screen flex items-center justify-center">
+    .success-card {
+        width: 100%;
+        max-width: 44rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+        padding: 2rem;
+        text-align: center;
+    }
 
-    <!-- (Success Card)
-         This simple card is centered using flexbox. I made it small because it’s only showing a short message. -->
-    <div class="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md">
+    .success-icon {
+        font-size: 2rem;
+        line-height: 1;
+        margin-bottom: 0.75rem;
+    }
+</style>
+{% endblock %}
 
-        <!-- (Main Success Message)-->
-        <h2 class="text-2xl font-bold mb-3">Checklist Created Successfully!</h2>
-        <p class="mb-6">Your checklist has been saved.</p>
+{% block content %}
+<div class="success-page-wrap">
+    <div class="success-card">
+        <div class="success-icon">✅</div>
+        <h2 class="text-2xl font-bold mb-3">Checklist Created Successfully</h2>
 
-        <!-- (Buttons)
-             The first lets me create another checklist.
-             The second returns to the appropriate dashboard.
-             I used DaisyUI button styles for consistency. -->
-        <a href="{% url 'create_checklist' %}" class="btn btn-primary w-full">Create Another</a>
+        {% if checklist_label %}
+            <p class="mb-6 text-lg">
+                <strong>{{ checklist_label }}</strong> has been created and assigned.
+            </p>
+        {% else %}
+            <p class="mb-6 text-lg">Your checklist has been created and assigned.</p>
+        {% endif %}
 
-        <a href="{% url 'dashboard' %}" class="btn btn-secondary w-full mt-3">
-            Return to Dashboard
+        <a href="{% url 'manager_checklists_combined' %}" class="btn btn-success w-full md:w-auto px-8">
+            Confirm and Return to Checklist Page
         </a>
     </div>
-
-</body>
-</html>
+</div>
+{% endblock %}

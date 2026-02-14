@@ -20,6 +20,7 @@ urlpatterns = [
     path("checklists/create/", views.create_checklist, name="create_checklist"),
     path("checklists/success/", views.checklist_success, name="checklist_success"),
     path("manager/checklists/", views.manager_checklists_combined, name="manager_checklists_combined"),
+    path("manager/checklists/<int:checklist_id>/assign/", views.manager_assign_checklist, name="manager_assign_checklist"),
     path("manager/checklists/<int:checklist_id>/unassign/", views.manager_unassign_checklist, name="manager_unassign_checklist"),
     path("manager/checklists/<int:checklist_id>/delete/", views.manager_delete_checklist, name="manager_delete_checklist"),
     path("api/checklists/<int:pk>/", views.api_get_checklist_data, name="api_get_checklist_data"),

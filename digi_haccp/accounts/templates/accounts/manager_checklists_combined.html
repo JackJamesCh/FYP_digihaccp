@@ -148,6 +148,17 @@
                       Unassign
                     </button>
                   </form>
+                  {% else %}
+                  <form method="post" action="{% url 'manager_assign_checklist' c.id %}">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn btn-success btn-sm"
+                      onclick="return confirm('Assign this checklist? Staff will see it as active again.')"
+                    >
+                      Assign
+                    </button>
+                  </form>
                   {% endif %}
 
                   <form method="post" action="{% url 'manager_delete_checklist' c.id %}">

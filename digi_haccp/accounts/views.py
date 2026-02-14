@@ -248,7 +248,9 @@ def create_checklist(request):
                 )
                 order += 1
 
-            # After creating the checklist and items I send the user to a simple success page
+            # After creating the checklist, show an explicit confirmation page with a button
+            checklist_label = checklist.title or checklist.template.name
+            request.session["created_checklist_label"] = checklist_label
             return redirect("checklist_success")
         
     else:
@@ -259,7 +261,13 @@ def create_checklist(request):
 
 # I made this view to show a confirmation page after successfully creating a checklist.
 def checklist_success(request):
-    return render(request, "accounts/checklist_success.html")
+    if not request.user.is_authenticated or request.user.role != "manager":
+        return redirect("dashboard")
+
+    checklist_label = request.session.pop("created_checklist_label", None)
+    return render(request, "accounts/checklist_success.html", {
+        "checklist_label": checklist_label,
+    })
 
 
 # This view returns JSON data for a specific checklist, so the frontend can render column definitions and row data.
@@ -341,6 +349,29 @@ def manager_unassign_checklist(request, checklist_id):
     checklist.is_active = False
     checklist.save(update_fields=["is_active"])
     messages.success(request, f"Checklist '{checklist.title or checklist.template.name}' has been unassigned.")
+    return redirect("manager_checklists_combined")
+
+
+# This view lets a manager assign a previously unassigned checklist back to a deli.
+# I treat assign as setting the checklist active so staff can see it again.
+@login_required
+def manager_assign_checklist(request, checklist_id):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    checklist = get_object_or_404(Checklist, id=checklist_id)
+
+    # Managers can only modify checklists for delis assigned to them.
+    if checklist.deli not in request.user.delis.all():
+        messages.error(request, "You cannot modify a checklist for an unassigned deli.")
+        return redirect("manager_checklists_combined")
+
+    checklist.is_active = True
+    checklist.save(update_fields=["is_active"])
+    messages.success(request, f"Checklist '{checklist.title or checklist.template.name}' has been assigned and is now active.")
     return redirect("manager_checklists_combined")
 
 
