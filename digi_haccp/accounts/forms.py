@@ -51,6 +51,14 @@ class ChecklistForm(forms.ModelForm):
         fields = ["template", "deli", "frequency", "title"]
         # Django will build these fields for me based on the model
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
+        # Restrict deli choices to manager-assigned delis
+        if user and getattr(user, "role", None) == "manager":
+            self.fields["deli"].queryset = user.delis.all().order_by("deli_name")
+
 
 # (Checklist Item Form)
 # This form is used when manually editing or adding individual checklist items.

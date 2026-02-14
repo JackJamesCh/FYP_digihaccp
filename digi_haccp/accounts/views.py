@@ -17,7 +17,7 @@ from .models import (
     TemplateField,
 )
 from django.contrib.auth.decorators import user_passes_test
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils.timezone import now, localdate
 from decimal import Decimal, InvalidOperation
 import json
@@ -218,7 +218,7 @@ def create_checklist(request):
         return redirect("dashboard")
 
     if request.method == "POST":
-        form = ChecklistForm(request.POST)
+        form = ChecklistForm(request.POST, user=request.user)
 
         if form.is_valid():
             # I first save the checklist itself without committing related items yet
@@ -252,7 +252,7 @@ def create_checklist(request):
             return redirect("checklist_success")
         
     else:
-        form = ChecklistForm()
+        form = ChecklistForm(user=request.user)
 
     return render(request, "accounts/create_checklist.html", {"form": form})
 
@@ -319,6 +319,51 @@ def manager_checklists_combined(request):
     return render(request, "accounts/manager_checklists_combined.html", {
         "checklists": checklists,
     })
+
+
+# This view lets a manager unassign a checklist from a deli without deleting history.
+# I treat unassign as setting the checklist inactive so staff no longer see it.
+@login_required
+def manager_unassign_checklist(request, checklist_id):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    checklist = get_object_or_404(Checklist, id=checklist_id)
+
+    # Managers can only modify checklists for delis assigned to them.
+    if checklist.deli not in request.user.delis.all():
+        messages.error(request, "You cannot modify a checklist for an unassigned deli.")
+        return redirect("manager_checklists_combined")
+
+    checklist.is_active = False
+    checklist.save(update_fields=["is_active"])
+    messages.success(request, f"Checklist '{checklist.title or checklist.template.name}' has been unassigned.")
+    return redirect("manager_checklists_combined")
+
+
+# This view allows a manager to fully delete a checklist assignment.
+# Deleting removes checklist items, instances and related responses through cascades.
+@login_required
+def manager_delete_checklist(request, checklist_id):
+    if request.user.role != "manager":
+        return redirect("dashboard")
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    checklist = get_object_or_404(Checklist, id=checklist_id)
+
+    if checklist.deli not in request.user.delis.all():
+        messages.error(request, "You cannot delete a checklist for an unassigned deli.")
+        return redirect("manager_checklists_combined")
+
+    checklist_label = checklist.title or checklist.template.name
+    checklist.delete()
+    messages.success(request, f"Checklist '{checklist_label}' has been deleted.")
+    return redirect("manager_checklists_combined")
 
 
 # This view is for staff users to see the checklists they need to fill in.

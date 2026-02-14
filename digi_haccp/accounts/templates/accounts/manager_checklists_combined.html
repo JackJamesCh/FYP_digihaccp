@@ -105,8 +105,10 @@
               <th>Deli</th>
               <th>Template</th>
               <th>Frequency</th>
+              <th>Status</th>
               <th>Created</th>
               <th>Select</th>
+              <th>Actions</th>
           </tr>
       </thead>
 
@@ -117,6 +119,13 @@
               <td>{{ c.deli.deli_name }}</td>
               <td>{{ c.template.name }}</td>
               <td>{{ c.frequency|title }}</td>
+              <td>
+                {% if c.is_active %}
+                  <span class="badge badge-success">Active</span>
+                {% else %}
+                  <span class="badge badge-ghost">Unassigned</span>
+                {% endif %}
+              </td>
               <td>{{ c.created_at|date:"d M Y, H:i" }}</td>
 
               <!-- (View Button)
@@ -124,6 +133,34 @@
               <td>
                   <button onclick="loadChecklist({{ c.id }})"
                           class="btn btn-accent btn-sm">View</button>
+              </td>
+
+              <td>
+                <div class="flex gap-2">
+                  {% if c.is_active %}
+                  <form method="post" action="{% url 'manager_unassign_checklist' c.id %}">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn btn-warning btn-sm"
+                      onclick="return confirm('Unassign this checklist? Staff will no longer see it.')"
+                    >
+                      Unassign
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  <form method="post" action="{% url 'manager_delete_checklist' c.id %}">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn btn-error btn-sm"
+                      onclick="return confirm('Delete this checklist permanently? This will remove related checklist history.')"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
               </td>
           </tr>
           {% endfor %}
