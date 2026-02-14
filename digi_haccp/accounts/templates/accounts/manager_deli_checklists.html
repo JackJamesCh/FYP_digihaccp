@@ -143,6 +143,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-alpine.css" />
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
 <div class="page-card">
 
@@ -173,6 +175,12 @@
     <h3 id="detailHeader"></h3>
     <div id="staffInvolved"></div>
 
+    <div style="margin-top: 14px;">
+        <button id="downloadPdfBtn" class="btn-view" style="opacity: 0.6; cursor: not-allowed;" disabled>
+            Download Selected Checklist (PDF)
+        </button>
+    </div>
+
     <!-- (AG Grid Detail Table) -->
     <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
 
@@ -182,6 +190,7 @@
 
 let detailGrid = null;
 let summaryGrid = null;
+let selectedInstanceData = null;
 
 const summaryColumnDefs = [
     {
@@ -236,7 +245,7 @@ const summaryColumnDefs = [
             const button = document.createElement("button");
             button.className = "btn-view";
             button.innerText = "View";
-            button.addEventListener("click", () => loadInstance(params.value));
+            button.addEventListener("click", () => loadInstance(params.value, params.data));
             return button;
         }
     }
@@ -259,9 +268,12 @@ document.addEventListener("DOMContentLoaded", () => {
         headerHeight: 42,
         animateRows: true
     });
+
+    const downloadBtn = document.getElementById("downloadPdfBtn");
+    downloadBtn.addEventListener("click", downloadSelectedChecklistPdf);
 });
 
-function loadInstance(instanceId) {
+function loadInstance(instanceId, rowMeta) {
     fetch(`/manager/checklist/instance/${instanceId}/data/`)
         .then(res => res.json())
         .then(data => {
@@ -270,6 +282,8 @@ function loadInstance(instanceId) {
                 document.getElementById("detailHeader").innerText = "No responses recorded.";
                 document.getElementById("staffInvolved").innerText = "";
                 document.getElementById("detailGrid").innerHTML = "";
+                selectedInstanceData = null;
+                setPdfButtonEnabled(false);
                 return;
             }
 
@@ -293,7 +307,68 @@ function loadInstance(instanceId) {
                 },
                 animateRows: true
             });
+
+            selectedInstanceData = {
+                checklistName: rowMeta?.checklist || "Checklist",
+                checklistDate: rowMeta?.date || "",
+                filledTime: data.filled_time || "",
+                staffInvolved: data.staff_involved || [],
+                columnDefs: data.columnDefs,
+                rowData: data.rowData
+            };
+
+            setPdfButtonEnabled(true);
         });
+}
+
+function setPdfButtonEnabled(enabled) {
+    const btn = document.getElementById("downloadPdfBtn");
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? "1" : "0.6";
+    btn.style.cursor = enabled ? "pointer" : "not-allowed";
+}
+
+function downloadSelectedChecklistPdf() {
+    if (!selectedInstanceData) return;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF("l", "pt", "a4");
+
+    const title = `${selectedInstanceData.checklistName} - ${selectedInstanceData.checklistDate}`;
+    doc.setFontSize(16);
+    doc.text(title, 40, 40);
+
+    doc.setFontSize(10);
+    if (selectedInstanceData.filledTime) {
+        doc.text(`Last Updated: ${selectedInstanceData.filledTime}`, 40, 60);
+    }
+    if (selectedInstanceData.staffInvolved.length) {
+        doc.text(`Staff involved: ${selectedInstanceData.staffInvolved.join(", ")}`, 40, 76);
+    }
+
+    const headers = selectedInstanceData.columnDefs.map(col => col.headerName || col.field);
+    const fields = selectedInstanceData.columnDefs.map(col => col.field);
+
+    const body = selectedInstanceData.rowData.map(row =>
+        fields.map(field => {
+            const value = row[field];
+            if (value === null || value === undefined) return "";
+            if (typeof value === "boolean") return value ? "Yes" : "No";
+            return String(value);
+        })
+    );
+
+    doc.autoTable({
+        head: [headers],
+        body,
+        startY: 92,
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [38, 107, 48] }
+    });
+
+    const safeName = selectedInstanceData.checklistName.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+    const safeDate = (selectedInstanceData.checklistDate || "").replace(/[^0-9-]/g, "");
+    doc.save(`${safeName || "checklist"}_${safeDate || "history"}.pdf`);
 }
 </script>
 

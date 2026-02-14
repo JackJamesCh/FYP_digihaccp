@@ -43,30 +43,76 @@
 
   /* (Content Card)
      I wrapped everything in a centered card so the page doesn't stretch too wide. */
-  .card {
+  .page-card {
     background: white;
     border-radius: 20px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     padding: 30px;
     margin: 40px auto;
-    max-width: 1200px;
+    width: min(1600px, 95vw);
   }
 
-  /* (Table Styles)
-     Basic clean table layout so managers can quickly scan through checklists. */
-  table {
-    width: 100%;
-    margin-bottom: 20px;
+  #summaryGrid {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 8px;
   }
 
-  th, td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
+  #myGrid {
+    border: 1px solid #e8e8e8;
+    border-radius: 14px;
+    overflow: hidden;
   }
 
-  th {
-    background: #f7f7f7;
+  #summaryGrid .ag-root-wrapper,
+  #myGrid .ag-root-wrapper {
+    border: none;
+  }
+
+  .search-wrap {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .search-input {
+    width: min(430px, 100%);
+    padding: 10px 14px;
+    border: 1px solid #d7d7d7;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+  }
+
+  .search-input:focus {
+    border-color: #56ab2f;
+    box-shadow: 0 0 0 3px rgba(86, 171, 47, 0.15);
+  }
+
+  .grid-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 12px;
     font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .grid-btn-view { background: #9fdcc8; }
+  .grid-btn-assign { background: #10b981; color: #092714; }
+  .grid-btn-unassign { background: #f6be00; color: #272000; }
+  .grid-btn-delete { background: #ff5e6a; color: #260307; }
+
+  .actions-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 0;
   }
 </style>
 
@@ -76,7 +122,7 @@
 
 <!-- (Main Content Card)
      This card holds the full list of all checklists created for all delis. -->
-<div class="card">
+<div class="page-card">
 
   <!-- (Page Title) -->
   <h2 class="text-3xl font-bold mb-6 text-center">Checklists</h2>
@@ -90,93 +136,38 @@
       </a>
   </div>
 
-  <!-- (Checklist List Table)
-       This table shows all checklists the manager has access to:
-       - Title
-       - Deli it belongs to
-       - Template used
-       - Frequency
-       - Date created
-       - A button to view the data -->
-  <table>
-      <thead>
-          <tr>
-              <th>Title</th>
-              <th>Deli</th>
-              <th>Template</th>
-              <th>Frequency</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Select</th>
-              <th>Actions</th>
-          </tr>
-      </thead>
+  <div class="search-wrap">
+    <input
+      id="checklistSearch"
+      class="search-input"
+      type="text"
+      placeholder="Search checklist by name..."
+      aria-label="Search checklists by name"
+    >
+  </div>
 
-      <tbody>
-          {% for c in checklists %}
-          <tr>
-              <td>{{ c.title }}</td>
-              <td>{{ c.deli.deli_name }}</td>
-              <td>{{ c.template.name }}</td>
-              <td>{{ c.frequency|title }}</td>
-              <td>
-                {% if c.is_active %}
-                  <span class="badge badge-success">Active</span>
-                {% else %}
-                  <span class="badge badge-ghost">Unassigned</span>
-                {% endif %}
-              </td>
-              <td>{{ c.created_at|date:"d M Y, H:i" }}</td>
-
-              <!-- (View Button)
-                   When clicked it loads this checklist's data into the AG Grid below. -->
-              <td>
-                  <button onclick="loadChecklist({{ c.id }})"
-                          class="btn btn-accent btn-sm">View</button>
-              </td>
-
-              <td>
-                <div class="flex gap-2">
-                  {% if c.is_active %}
-                  <form method="post" action="{% url 'manager_unassign_checklist' c.id %}">
-                    {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="btn btn-warning btn-sm"
-                      onclick="return confirm('Unassign this checklist? Staff will no longer see it.')"
-                    >
-                      Unassign
-                    </button>
-                  </form>
-                  {% else %}
-                  <form method="post" action="{% url 'manager_assign_checklist' c.id %}">
-                    {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="btn btn-success btn-sm"
-                      onclick="return confirm('Assign this checklist? Staff will see it as active again.')"
-                    >
-                      Assign
-                    </button>
-                  </form>
-                  {% endif %}
-
-                  <form method="post" action="{% url 'manager_delete_checklist' c.id %}">
-                    {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="btn btn-error btn-sm"
-                      onclick="return confirm('Delete this checklist permanently? This will remove related checklist history.')"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </div>
-              </td>
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
+  <div
+    id="summaryGrid"
+    class="ag-theme-alpine"
+    style="height: 440px; width: 100%;"
+    data-row-data='[
+      {% for c in checklists %}
+      {
+        "id": {{ c.id }},
+        "title": "{{ c.title|escapejs }}",
+        "deli": "{{ c.deli.deli_name|escapejs }}",
+        "template": "{{ c.template.name|escapejs }}",
+        "frequency": "{{ c.frequency|title|escapejs }}",
+        "status": "{% if c.is_active %}Active{% else %}Unassigned{% endif %}",
+        "isActive": {% if c.is_active %}true{% else %}false{% endif %},
+        "created": "{{ c.created_at|date:'d M Y, H:i' }}",
+        "assignUrl": "{% url 'manager_assign_checklist' c.id %}",
+        "unassignUrl": "{% url 'manager_unassign_checklist' c.id %}",
+        "deleteUrl": "{% url 'manager_delete_checklist' c.id %}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ]'
+  ></div>
 
   <hr class="my-6">
 
@@ -194,6 +185,107 @@
      When a manager clicks the "View" button I make a fetch call to the API endpoint
      and build the AG Grid with the returned JSON data. -->
 <script>
+let summaryGrid = null;
+
+const summaryColumnDefs = [
+    { headerName: "Title", field: "title", flex: 1.2, minWidth: 170, filter: "agTextColumnFilter" },
+    { headerName: "Deli", field: "deli", flex: 1.2, minWidth: 170 },
+    { headerName: "Template", field: "template", flex: 1.3, minWidth: 190 },
+    { headerName: "Frequency", field: "frequency", flex: 0.9, minWidth: 120 },
+    {
+      headerName: "Status",
+      field: "status",
+      flex: 0.9,
+      minWidth: 120,
+      cellRenderer: (params) => {
+        const active = params.data?.isActive;
+        const cls = active ? "badge badge-success" : "badge badge-ghost";
+        return `<span class="${cls}">${params.value}</span>`;
+      }
+    },
+    { headerName: "Created", field: "created", flex: 1.2, minWidth: 170 },
+    {
+      headerName: "Select",
+      field: "id",
+      flex: 0.9,
+      minWidth: 110,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        return `<button class="grid-btn grid-btn-view" onclick="loadChecklist(${params.value})">View</button>`;
+      }
+    },
+    {
+      headerName: "Actions",
+      field: "id",
+      flex: 1.25,
+      minWidth: 190,
+      sortable: false,
+      filter: false,
+      cellRenderer: (params) => {
+        const row = params.data;
+        const actionBtn = row.isActive
+          ? `<button class="grid-btn grid-btn-unassign" onclick="postChecklistAction('${row.unassignUrl}', 'Unassign this checklist? Staff will no longer see it.')">Unassign</button>`
+          : `<button class="grid-btn grid-btn-assign" onclick="postChecklistAction('${row.assignUrl}', 'Assign this checklist? Staff will see it as active again.')">Assign</button>`;
+
+        return `
+          <div class="actions-cell">
+            ${actionBtn}
+            <button class="grid-btn grid-btn-delete" onclick="postChecklistAction('${row.deleteUrl}', 'Delete this checklist permanently? This will remove related checklist history.')">Delete</button>
+          </div>
+        `;
+      }
+    }
+];
+
+document.addEventListener("DOMContentLoaded", () => {
+    const summaryGridElement = document.getElementById("summaryGrid");
+    const rowData = JSON.parse(summaryGridElement.dataset.rowData || "[]");
+
+    summaryGrid = agGrid.createGrid(summaryGridElement, {
+        columnDefs: summaryColumnDefs,
+        rowData,
+        defaultColDef: {
+            sortable: true,
+            filter: true,
+            resizable: true
+        },
+        animateRows: true,
+        rowHeight: 86,
+        suppressCellFocus: true,
+        ensureDomOrder: true
+    });
+
+    const searchInput = document.getElementById("checklistSearch");
+    searchInput.addEventListener("input", () => {
+        const value = searchInput.value.trim();
+        summaryGrid.setFilterModel({
+            title: value
+                ? { filterType: "text", type: "contains", filter: value }
+                : null
+        });
+        summaryGrid.onFilterChanged();
+    });
+});
+
+function getCsrfToken() {
+    const match = document.cookie.match(/(^|;)\s*csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[2]) : "";
+}
+
+function postChecklistAction(url, message) {
+    if (!confirm(message)) return;
+
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCsrfToken(),
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: ""
+    }).then(() => window.location.reload());
+}
+
 function loadChecklist(id) {
     fetch(`/api/checklists/${id}/`)
     .then(res => res.json())
