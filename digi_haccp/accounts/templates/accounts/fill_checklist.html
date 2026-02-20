@@ -182,7 +182,7 @@
 
 <script>
     /* (Grid Data From Backend)
-       These values come directly from Django when the page loads. (Did not have time to fix this issue but will fix it in iteration 3) */
+       These values come directly from Django when the page loads.  */
     const columnDefs = {{ column_defs_json|safe }};
     const rowData = {{ row_data_json|safe }};
     const locked = {{ locked|yesno:"true,false" }} === "true";

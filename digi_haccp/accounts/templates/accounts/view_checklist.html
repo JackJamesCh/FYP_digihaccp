@@ -136,11 +136,11 @@
          I used Django’s template variables to pass column definitions and row data
          directly into JavaScript. This lets me build the table dynamically. -->
     <script>
-        // (Column Definitions) (not sure what is wrong will figure it out in iteration3)
+        // (Column Definitions) 
         // These come from the Django view. They describe each column of the table.
         const columnDefs = {{ column_defs|safe }};
 
-        // (Row Data) (not sure what is wrong will figure it out in iteration3)
+        // (Row Data) 
         // These are the actual checklist rows that show inside AG Grid.
         const rowData = {{ row_data|safe }};
 
