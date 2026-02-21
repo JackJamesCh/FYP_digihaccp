@@ -49,6 +49,9 @@
         overflow: hidden;
         box-shadow: 0 12px 30px rgba(22, 104, 54, 0.12);
         border: 1px solid #e3f2e3;
+        --ag-input-background-color: #ffffff;
+        --ag-background-color: #ffffff;
+        --ag-foreground-color: #1f2937;
     }
 
     #summaryGrid .ag-root-wrapper {
@@ -73,6 +76,37 @@
     #summaryGrid .ag-cell {
         display: flex;
         align-items: center;
+    }
+
+    /* (Filter Input Readability)
+       Keep date filter controls clearly visible on white backgrounds. */
+    #summaryGrid .ag-input-field-input,
+    #summaryGrid .ag-floating-filter-input,
+    #summaryGrid input[type="text"],
+    #summaryGrid input[type="date"] {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        opacity: 1 !important;
+    }
+
+    /* AG Grid filter popup is rendered outside #summaryGrid (appended to body),
+       so style popup controls globally as well. */
+    .ag-popup .ag-menu,
+    .ag-popup .ag-filter,
+    .ag-popup .ag-filter-body,
+    .ag-popup .ag-picker-field-wrapper,
+    .ag-popup .ag-input-wrapper {
+        background-color: #ffffff !important;
+        opacity: 1 !important;
+    }
+
+    .ag-popup .ag-input-field-input,
+    .ag-popup .ag-mini-filter,
+    .ag-popup input[type="text"],
+    .ag-popup input[type="date"] {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+        opacity: 1 !important;
     }
 
     /* (View Button)
@@ -157,6 +191,12 @@
         Checklist History — {{ deli.deli_name }}
     </h2>
 
+    <div style="margin-bottom: 14px; display: flex; justify-content: flex-end;">
+        <button id="downloadPdfBtn" class="btn-view" style="opacity: 0.6; cursor: not-allowed;" disabled>
+            Download Selected Checklists (PDF)
+        </button>
+    </div>
+
     <!-- (Summary Grid) -->
     <div
         id="summaryGrid"
@@ -166,7 +206,7 @@
             {% for instance in instances %}
             {
                 "checklist": "{{ instance.checklist.title|escapejs }}",
-                "date": "{{ instance.date }}",
+                "date": "{{ instance.date|date:'Y-m-d' }}",
                 "instanceId": {{ instance.id }}
             }{% if not forloop.last %},{% endif %}
             {% endfor %}
@@ -176,12 +216,6 @@
     <!-- (Detail Header) -->
     <h3 id="detailHeader"></h3>
     <div id="staffInvolved"></div>
-
-    <div style="margin-top: 14px;">
-        <button id="downloadPdfBtn" class="btn-view" style="opacity: 0.6; cursor: not-allowed;" disabled>
-            Download Selected Checklist (PDF)
-        </button>
-    </div>
 
     <!-- (AG Grid Detail Table) -->
     <div id="detailGrid" class="ag-theme-alpine" style="height: 520px; width: 100%;"></div>
@@ -193,8 +227,48 @@
 let detailGrid = null;
 let summaryGrid = null;
 let selectedInstanceData = null;
+let selectedSummaryRows = [];
+const deliNameForPdf = "{{ deli.deli_name|escapejs }}";
+
+function parseIsoDateToLocalMidnight(value) {
+    if (!value || typeof value !== "string") {
+        return null;
+    }
+
+    const parts = value.split("-");
+    if (parts.length !== 3) {
+        return null;
+    }
+
+    const year = Number(parts[0]);
+    const month = Number(parts[1]);
+    const day = Number(parts[2]);
+
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+        return null;
+    }
+
+    const parsed = new Date(year, month - 1, day);
+    if (Number.isNaN(parsed.getTime())) {
+        return null;
+    }
+
+    return parsed;
+}
 
 const summaryColumnDefs = [
+    {
+        headerName: "",
+        width: 70,
+        pinned: "left",
+        sortable: false,
+        filter: false,
+        checkboxSelection: true,
+        headerCheckboxSelection: true,
+        headerCheckboxSelectionFilteredOnly: true,
+        suppressMenu: true,
+        suppressHeaderMenuButton: true,
+    },
     {
         headerName: "Checklist",
         field: "checklist",
@@ -208,22 +282,26 @@ const summaryColumnDefs = [
         flex: 2,
         filter: "agDateColumnFilter",
         floatingFilter: true,
+        valueFormatter: (params) => {
+            const parsed = parseIsoDateToLocalMidnight(params.value);
+            return parsed ? parsed.toLocaleDateString() : (params.value || "");
+        },
         filterParams: {
+            filterOptions: ["equals", "lessThan", "greaterThan", "inRange"],
+            defaultOption: "inRange",
+            inRangeInclusive: true,
+            maxNumConditions: 1,
+            suppressAndOrCondition: true,
             comparator: (filterLocalDateAtMidnight, cellValue) => {
                 if (!cellValue) {
                     return 0;
                 }
 
-                const parsed = new Date(cellValue);
-                if (Number.isNaN(parsed.getTime())) {
-                    return 0;
+                const cellDate = parseIsoDateToLocalMidnight(cellValue);
+                if (!cellDate) {
+                    // If parsing fails, keep the value out of filtered results.
+                    return -1;
                 }
-
-                const cellDate = new Date(
-                    parsed.getFullYear(),
-                    parsed.getMonth(),
-                    parsed.getDate()
-                );
 
                 if (cellDate < filterLocalDateAtMidnight) {
                     return -1;
@@ -260,6 +338,8 @@ document.addEventListener("DOMContentLoaded", () => {
     summaryGrid = agGrid.createGrid(summaryGridElement, {
         columnDefs: summaryColumnDefs,
         rowData: summaryRowData,
+        rowSelection: "multiple",
+        suppressRowClickSelection: true,
         defaultColDef: {
             resizable: true,
             sortable: true,
@@ -268,11 +348,16 @@ document.addEventListener("DOMContentLoaded", () => {
         suppressCellFocus: true,
         rowHeight: 48,
         headerHeight: 42,
-        animateRows: true
+        animateRows: true,
+        onSelectionChanged() {
+            selectedSummaryRows = summaryGrid.getSelectedRows() || [];
+            updatePdfButtonState();
+        }
     });
 
     const downloadBtn = document.getElementById("downloadPdfBtn");
-    downloadBtn.addEventListener("click", downloadSelectedChecklistPdf);
+    downloadBtn.addEventListener("click", downloadSelectedChecklistsPdf);
+    updatePdfButtonState();
 });
 
 function loadInstance(instanceId, rowMeta) {
@@ -285,7 +370,6 @@ function loadInstance(instanceId, rowMeta) {
                 document.getElementById("staffInvolved").innerText = "";
                 document.getElementById("detailGrid").innerHTML = "";
                 selectedInstanceData = null;
-                setPdfButtonEnabled(false);
                 return;
             }
 
@@ -318,59 +402,115 @@ function loadInstance(instanceId, rowMeta) {
                 columnDefs: data.columnDefs,
                 rowData: data.rowData
             };
-
-            setPdfButtonEnabled(true);
         });
 }
 
-function setPdfButtonEnabled(enabled) {
+function setPdfButtonEnabled(enabled, label) {
     const btn = document.getElementById("downloadPdfBtn");
     btn.disabled = !enabled;
     btn.style.opacity = enabled ? "1" : "0.6";
     btn.style.cursor = enabled ? "pointer" : "not-allowed";
+    if (label) {
+        btn.innerText = label;
+    }
 }
 
-function downloadSelectedChecklistPdf() {
-    if (!selectedInstanceData) return;
+function updatePdfButtonState() {
+    const count = selectedSummaryRows.length;
+
+    if (!count) {
+        setPdfButtonEnabled(false, "Download Selected Checklists (PDF)");
+        return;
+    }
+
+    const label = count === 1
+        ? "Download 1 Selected Checklist (PDF)"
+        : `Download ${count} Selected Checklists (PDF)`;
+
+    setPdfButtonEnabled(true, label);
+}
+
+async function downloadSelectedChecklistsPdf() {
+    if (!selectedSummaryRows.length) return;
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("l", "pt", "a4");
 
-    const title = `${selectedInstanceData.checklistName} - ${selectedInstanceData.checklistDate}`;
-    doc.setFontSize(16);
-    doc.text(title, 40, 40);
+    const selectedRowsOrdered = [...selectedSummaryRows].sort((a, b) => {
+        if (a.date === b.date) {
+            return String(a.checklist || "").localeCompare(String(b.checklist || ""));
+        }
+        return String(a.date || "").localeCompare(String(b.date || ""));
+    });
 
-    doc.setFontSize(10);
-    if (selectedInstanceData.filledTime) {
-        doc.text(`Last Updated: ${selectedInstanceData.filledTime}`, 40, 60);
-    }
-    if (selectedInstanceData.staffInvolved.length) {
-        doc.text(`Staff involved: ${selectedInstanceData.staffInvolved.join(", ")}`, 40, 76);
-    }
-
-    const headers = selectedInstanceData.columnDefs.map(col => col.headerName || col.field);
-    const fields = selectedInstanceData.columnDefs.map(col => col.field);
-
-    const body = selectedInstanceData.rowData.map(row =>
-        fields.map(field => {
-            const value = row[field];
-            if (value === null || value === undefined) return "";
-            if (typeof value === "boolean") return value ? "Yes" : "No";
-            return String(value);
+    const detailResponses = await Promise.all(
+        selectedRowsOrdered.map(async (row) => {
+            try {
+                const res = await fetch(`/manager/checklist/instance/${row.instanceId}/data/`);
+                const data = await res.json();
+                return { row, data };
+            } catch (error) {
+                return { row, data: null };
+            }
         })
     );
 
-    doc.autoTable({
-        head: [headers],
-        body,
-        startY: 92,
-        styles: { fontSize: 9, cellPadding: 4 },
-        headStyles: { fillColor: [38, 107, 48] }
+    detailResponses.forEach(({ row, data }, index) => {
+        if (index > 0) {
+            doc.addPage();
+        }
+
+        const title = `${row.checklist || "Checklist"} - ${row.date || ""}`;
+        doc.setFontSize(16);
+        doc.text(title, 40, 40);
+
+        doc.setFontSize(10);
+        doc.text(`Deli: ${deliNameForPdf || "N/A"}`, 40, 56);
+        const filledTime = data?.filled_time || "No response timestamp";
+        doc.text(`Last Updated: ${filledTime}`, 40, 72);
+
+        const staffInvolved = Array.isArray(data?.staff_involved) ? data.staff_involved : [];
+        if (staffInvolved.length) {
+            doc.text(`Staff involved: ${staffInvolved.join(", ")}`, 40, 88);
+        }
+
+        const hasTable = Array.isArray(data?.columnDefs)
+            && data.columnDefs.length
+            && Array.isArray(data?.rowData)
+            && data.rowData.length;
+
+        if (!hasTable) {
+            doc.setFontSize(12);
+            doc.text("No responses recorded for this checklist instance.", 40, 122);
+            return;
+        }
+
+        const headers = data.columnDefs.map(col => col.headerName || col.field);
+        const fields = data.columnDefs.map(col => col.field);
+
+        const body = data.rowData.map(itemRow =>
+            fields.map(field => {
+                const value = itemRow[field];
+                if (value === null || value === undefined) return "";
+                if (typeof value === "boolean") return value ? "Yes" : "No";
+                return String(value);
+            })
+        );
+
+        doc.autoTable({
+            head: [headers],
+            body,
+            startY: 102,
+            styles: { fontSize: 9, cellPadding: 4 },
+            headStyles: { fillColor: [38, 107, 48] }
+        });
     });
 
-    const safeName = selectedInstanceData.checklistName.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-    const safeDate = (selectedInstanceData.checklistDate || "").replace(/[^0-9-]/g, "");
-    doc.save(`${safeName || "checklist"}_${safeDate || "history"}.pdf`);
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    doc.save(`checklist_history_selected_${y}${m}${d}.pdf`);
 }
 </script>
 
