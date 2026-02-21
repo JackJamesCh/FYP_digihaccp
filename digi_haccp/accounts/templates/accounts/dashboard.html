@@ -16,6 +16,7 @@
     max-width: 850px;
     margin: 70px auto;
     background: white;
+    border: 2px solid #dbe5ef;
     border-radius: 20px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     padding: 50px;
@@ -34,9 +35,38 @@
      I added space above + softer color to keep it subtle but readable. */
   .user-info {
     color: #555;
-    margin-top: 10px;
+    margin-top: 16px;
     font-size: 16px;
     line-height: 1.6;
+  }
+
+  .section-card {
+    border: 2px solid #d7e2ec;
+    border-radius: 14px;
+    padding: 18px;
+    margin: 18px auto 0;
+    max-width: 640px;
+    background: #ffffff;
+  }
+
+  .section-profile {
+    background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+    border-color: #cfe0f3;
+  }
+
+  .section-deli {
+    background: linear-gradient(180deg, #f8fff8 0%, #eefcf2 100%);
+    border-color: #cdebd4;
+  }
+
+  .section-requests {
+    background: linear-gradient(180deg, #fffdf7 0%, #fff8ec 100%);
+    border-color: #f0dfba;
+  }
+
+  .section-actions {
+    background: linear-gradient(180deg, #fbfbff 0%, #f5f6ff 100%);
+    border-color: #d9dcfb;
   }
 
   /* (Role Badge)
@@ -57,13 +87,13 @@
      I made this a separate card inside the dashboard so users can
      easily see which deli locations they belong to. */
   .deli-info {
-    background: #f8f8f8;
+    background: transparent;
     border-radius: 12px;
     padding: 20px;
-    margin: 25px auto;
+    margin: 0;
     width: 100%;
-    max-width: 600px;
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+    max-width: 100%;
+    box-shadow: none;
   }
 
   .deli-info h3 {
@@ -114,6 +144,35 @@
       padding: 30px 20px;
       margin: 40px 15px;
     }
+
+    .join-request-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .join-request-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .join-request-btn {
+    min-width: 110px;
+    border-radius: 9999px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .section-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.75;
+    margin-bottom: 0.45rem;
   }
 
 </style>
@@ -140,7 +199,8 @@
 
     <!-- (User Details)
          Shows their role badge so staff instantly know what account type they’re using. -->
-    <div class="user-info">
+    <div class="user-info section-card section-profile">
+      <div class="section-title">Account Overview</div>
       <p>Your Role:
         <span class="role-badge">
           {{ request.user.role }}
@@ -150,30 +210,39 @@
 
     <!-- (Assigned Delis Card)
          Staff may belong to multiple delis, so I list them all here. -->
-    <div class="deli-info">
+    <div class="deli-info section-card section-deli">
+      <div class="section-title">Assigned Delis</div>
       <h3>Assigned Deli Location(s)</h3>
       <p>{{ request.user.delis.all|join:", " |default:"No deli assigned" }}</p>
     </div>
 
     {% if pending_join_requests %}
-    <div class="deli-info" style="text-align:left;">
-      <h3>Join Deli Requests</h3>
+    <div class="deli-info text-left section-card section-requests">
+      <div class="section-title">Requests</div>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="mb-0">Join Deli Requests</h3>
+        <span class="badge badge-info badge-md">{{ pending_join_requests|length }}</span>
+      </div>
+
       <div class="space-y-3">
         {% for req in pending_join_requests %}
-          <div class="p-3 rounded-lg bg-white border border-gray-200 flex flex-wrap justify-between items-center gap-2">
-            <div>
-              <div class="font-semibold">{{ req.deli.deli_name }}</div>
-              <div class="text-sm text-gray-600">Invited by {{ req.invited_by.email }}</div>
-            </div>
-            <div class="flex gap-2">
-              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'accept' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-success btn-sm">Accept</button>
-              </form>
-              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'reject' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline btn-error btn-sm">Reject</button>
-              </form>
+          <div class="join-request-row card card-compact bg-base-100 border border-base-300 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div class="card-body gap-3">
+              <div class="text-center">
+                <div class="font-semibold text-base-content">{{ req.deli.deli_name }}</div>
+                <div class="text-sm opacity-70">Invited by {{ req.invited_by.email }}</div>
+              </div>
+
+              <div class="card-actions join-request-actions">
+                <form method="POST" action="{% url 'respond_deli_join_request' req.id 'accept' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-success btn-sm join-request-btn">Accept</button>
+                </form>
+                <form method="POST" action="{% url 'respond_deli_join_request' req.id 'reject' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline btn-error btn-sm join-request-btn">Reject</button>
+                </form>
+              </div>
             </div>
           </div>
         {% endfor %}
@@ -183,15 +252,18 @@
 
     <!-- (Quick Instructions)
          A little helper sentence to guide staff on what to do next. -->
-    <p>Use the options below to manage your HACCP tasks efficiently.</p>
+    <div class="section-card section-actions">
+      <div class="section-title">Quick Actions</div>
+      <p>Use the options below to manage your HACCP tasks efficiently.</p>
 
-    <!-- (Main Action Buttons)
-         View Checklists → takes staff to today’s checklist list.
-         Record Data (placeholder for your next feature). Help (for future guides or support.) -->
-    <div class="btn-group">
-      <a href="{% url 'staff_checklists' %}" class="btn btn-primary px-8">View Checklists</a>
-      <!--<a href="#" class="btn btn-success px-8">Record Data</a>
-      <a href="#" class="btn btn-outline btn-success px-8">Help</a> -->
+      <!-- (Main Action Buttons)
+           View Checklists → takes staff to today’s checklist list.
+           Record Data (placeholder for your next feature). Help (for future guides or support.) -->
+      <div class="btn-group">
+        <a href="{% url 'staff_checklists' %}" class="btn btn-primary px-8">View Checklists</a>
+        <!--<a href="#" class="btn btn-success px-8">Record Data</a>
+        <a href="#" class="btn btn-outline btn-success px-8">Help</a> -->
+      </div>
     </div>
 
   </div>

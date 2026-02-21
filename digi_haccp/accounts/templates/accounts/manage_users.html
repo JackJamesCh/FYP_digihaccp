@@ -74,6 +74,7 @@
     background: white;
     width: 100%;
     max-width: 1200px;
+    border: 2px solid #b6c3d1;
     border-radius: 20px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     animation: fadeIn 0.7s ease-out;
@@ -111,6 +112,40 @@
     transition: background 0.2s ease-in-out;
   }
 
+  .users-table-wrap {
+    border: 2px solid #b9c8d8;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+    background: #ffffff;
+  }
+
+  .users-table-wrap table thead tr {
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 2px solid #b9c8d8;
+  }
+
+  .users-table-wrap table tbody tr {
+    border-bottom: 1.5px solid #d1dde8;
+  }
+
+  .users-table-wrap table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .users-table-wrap table tbody td {
+    border-right: 1.5px solid #d8e2ec;
+  }
+
+  .users-table-wrap table thead th {
+    border-right: 1.5px solid #d8e2ec;
+  }
+
+  .users-table-wrap table tbody td:last-child,
+  .users-table-wrap table thead th:last-child {
+    border-right: none;
+  }
+
   /* (Message Alerts)
      These appear when managers delete or update users. */
   .alert {
@@ -118,6 +153,179 @@
     padding: 12px 15px;
     margin-bottom: 10px;
     font-weight: 500;
+  }
+
+  /* (Invite Section Refresh)
+     This gives the invite form a cleaner, modern card style with
+     better spacing and polished form controls. */
+  .invite-section {
+    position: relative;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid #d1fae5;
+    background: linear-gradient(145deg, #f8fffb, #ecfdf5);
+    box-shadow: 0 10px 25px rgba(6, 95, 70, 0.08);
+  }
+
+  .invite-section h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .invite-subtitle {
+    margin-top: 0.35rem;
+    color: #4b5563;
+    font-size: 0.92rem;
+  }
+
+  .invite-grid {
+    margin-top: 1rem;
+    display: grid;
+    gap: 0.9rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .invite-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .invite-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .invite-section input,
+  .invite-section select {
+    height: 46px;
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    padding: 0 0.9rem;
+    font-size: 0.98rem;
+    color: #0f172a;
+    transition: all 0.2s ease;
+  }
+
+  .invite-section input:focus,
+  .invite-section select:focus {
+    outline: none;
+    border-color: #34d399;
+    box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.18);
+  }
+
+  .invite-btn {
+    height: 46px;
+    border: none;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    box-shadow: 0 8px 16px rgba(5, 150, 105, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+  }
+
+  .invite-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(5, 150, 105, 0.28);
+  }
+
+  .invite-note {
+    margin-top: 0.9rem;
+    font-size: 0.86rem;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid #d1fae5;
+    border-radius: 0.7rem;
+    padding: 0.65rem 0.8rem;
+  }
+
+  /* (Pending Requests)
+     A clean, card-based layout so managers can quickly scan
+     outstanding join invites. */
+  .pending-requests {
+    margin-bottom: 1.8rem;
+    border: 1px solid #dbeafe;
+    border-radius: 1rem;
+    background: linear-gradient(160deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 10px 24px rgba(30, 64, 175, 0.08);
+    overflow: hidden;
+  }
+
+  .pending-requests-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.9rem 1rem;
+    background: #eff6ff;
+    border-bottom: 1px solid #dbeafe;
+  }
+
+  .pending-requests-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  .pending-requests-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.8rem;
+    height: 1.8rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1e40af;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .pending-requests-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem 0;
+  }
+
+  .pending-request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #eef2ff;
+  }
+
+  .pending-request-item:last-child {
+    border-bottom: none;
+  }
+
+  .pending-request-email {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1f2937;
+    word-break: break-word;
+  }
+
+  .pending-request-deli {
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    border: 1px solid #bae6fd;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.28rem 0.65rem;
   }
 
   @keyframes fadeIn {
@@ -139,6 +347,10 @@
       gap: 10px;
       padding: 15px;
     }
+
+    .invite-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 {% endblock %}
@@ -159,36 +371,43 @@
       <!-- (Invite by Email)
            Managers can invite any existing account by email to one of their own delis.
            The invited user must accept from their dashboard before assignment happens. -->
-      <div class="mb-8 p-4 rounded-xl border border-green-200 bg-green-50">
-        <h3 class="font-semibold text-lg mb-3 text-gray-800">Invite User to Deli</h3>
-        <form method="POST" action="{% url 'invite_user_to_deli' %}" class="grid md:grid-cols-3 gap-3 items-end">
+      <div class="invite-section">
+        <h3>Invite User to Deli</h3>
+        <p class="invite-subtitle">Send a deli join request to an existing user by email.</p>
+        <form method="POST" action="{% url 'invite_user_to_deli' %}" class="invite-grid">
           {% csrf_token %}
-          <div>
-            <label class="label"><span class="label-text">User Email</span></label>
+          <div class="invite-field">
+            <label class="invite-label">User Email</label>
             {{ invite_form.email }}
           </div>
-          <div>
-            <label class="label"><span class="label-text">Deli</span></label>
+          <div class="invite-field">
+            <label class="invite-label">Deli</label>
             {{ invite_form.deli }}
           </div>
-          <div>
-            <button type="submit" class="btn btn-success w-full">Send Join Request</button>
+          <div class="invite-field">
+            <button type="submit" class="invite-btn">Send Join Request</button>
           </div>
         </form>
-        <p class="text-sm text-gray-600 mt-2">
+        <p class="invite-note">
           The user must accept the request from their dashboard before being assigned.
         </p>
       </div>
 
       {% if sent_join_requests %}
-      <div class="mb-8 p-4 rounded-xl border border-blue-200 bg-blue-50">
-        <h3 class="font-semibold text-lg mb-2 text-gray-800">Pending Join Requests You Sent</h3>
-        <ul class="list-disc ml-5 text-sm text-gray-700">
+      <section class="pending-requests">
+        <div class="pending-requests-header">
+          <h3 class="pending-requests-title">Pending Join Requests</h3>
+          <span class="pending-requests-count">{{ sent_join_requests|length }}</span>
+        </div>
+        <ul class="pending-requests-list">
           {% for req in sent_join_requests %}
-            <li>{{ req.invited_user.email }} → {{ req.deli.deli_name }}</li>
+            <li class="pending-request-item">
+              <span class="pending-request-email">{{ req.invited_user.email }}</span>
+              <span class="pending-request-deli">{{ req.deli.deli_name }}</span>
+            </li>
           {% endfor %}
         </ul>
-      </div>
+      </section>
       {% endif %}
 
       <!-- (Flash Messages)
@@ -208,7 +427,7 @@
              - assigned delis
              - actions managers can perform  
            I wrapped it in overflow-x-auto so it scrolls on smaller screens. -->
-      <div class="overflow-x-auto">
+      <div class="overflow-x-auto users-table-wrap">
         <table class="table table-zebra w-full">
           <thead>
             <tr class="bg-base-200 text-base font-semibold">
