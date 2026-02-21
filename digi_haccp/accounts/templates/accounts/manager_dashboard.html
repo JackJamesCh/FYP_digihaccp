@@ -137,6 +137,14 @@
        This holds all the content visible on the manager dashboard. -->
   <div class="dashboard-container">
 
+    {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+          <div class="alert alert-info">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- (Welcome Header)
          Shows the manager’s email and highlights their role. -->
     <div class="dashboard-header">
@@ -165,6 +173,32 @@
         <p>Use this dashboard to manage users, oversee deli activity, and maintain HACCP records.</p>
       </div>
     </div>
+
+    {% if pending_join_requests %}
+    <div class="info-card" style="margin-bottom: 20px;">
+      <h3>Join Deli Requests</h3>
+      <div class="space-y-3">
+        {% for req in pending_join_requests %}
+          <div class="p-3 rounded-lg bg-white border border-gray-200 flex flex-wrap justify-between items-center gap-2">
+            <div>
+              <div class="font-semibold">{{ req.deli.deli_name }}</div>
+              <div class="text-sm text-gray-600">Invited by {{ req.invited_by.email }}</div>
+            </div>
+            <div class="flex gap-2">
+              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'accept' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+              </form>
+              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'reject' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-error btn-sm">Reject</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- (Quick Action Buttons)
          I added these buttons so managers can quickly navigate between key pages. -->

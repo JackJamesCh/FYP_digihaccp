@@ -156,6 +156,41 @@
         <h2 class="page-title">User Management</h2>
       </div>
 
+      <!-- (Invite by Email)
+           Managers can invite any existing account by email to one of their own delis.
+           The invited user must accept from their dashboard before assignment happens. -->
+      <div class="mb-8 p-4 rounded-xl border border-green-200 bg-green-50">
+        <h3 class="font-semibold text-lg mb-3 text-gray-800">Invite User to Deli</h3>
+        <form method="POST" action="{% url 'invite_user_to_deli' %}" class="grid md:grid-cols-3 gap-3 items-end">
+          {% csrf_token %}
+          <div>
+            <label class="label"><span class="label-text">User Email</span></label>
+            {{ invite_form.email }}
+          </div>
+          <div>
+            <label class="label"><span class="label-text">Deli</span></label>
+            {{ invite_form.deli }}
+          </div>
+          <div>
+            <button type="submit" class="btn btn-success w-full">Send Join Request</button>
+          </div>
+        </form>
+        <p class="text-sm text-gray-600 mt-2">
+          The user must accept the request from their dashboard before being assigned.
+        </p>
+      </div>
+
+      {% if sent_join_requests %}
+      <div class="mb-8 p-4 rounded-xl border border-blue-200 bg-blue-50">
+        <h3 class="font-semibold text-lg mb-2 text-gray-800">Pending Join Requests You Sent</h3>
+        <ul class="list-disc ml-5 text-sm text-gray-700">
+          {% for req in sent_join_requests %}
+            <li>{{ req.invited_user.email }} → {{ req.deli.deli_name }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
       <!-- (Flash Messages)
            These appear when a user is deleted or something goes wrong. -->
       {% if messages %}

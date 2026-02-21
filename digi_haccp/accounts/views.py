@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .newuser import SignUpForm
-from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem
+from .forms import DeliForm, AssignDeliForm, ChecklistForm, ChecklistItem, InviteUserToDeliForm
 from datetime import date, datetime
 
 from .models import (
@@ -15,10 +15,12 @@ from .models import (
     ChecklistResponse,
     ResponseItem,
     TemplateField,
+    DeliJoinRequest,
 )
 from django.contrib.auth.decorators import user_passes_test
 from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils.timezone import now, localdate
+from django.db.models import Q
 from decimal import Decimal, InvalidOperation
 import json
 
@@ -52,7 +54,14 @@ def login_view(request):
 # This is the main dashboard for normal staff users. I protected this view using login_required so only authenticated users can see it.
 @login_required(login_url='login')
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html')
+    pending_join_requests = DeliJoinRequest.objects.filter(
+        invited_user=request.user,
+        status=DeliJoinRequest.STATUS_PENDING,
+    ).select_related('deli', 'invited_by')
+
+    return render(request, 'accounts/dashboard.html', {
+        'pending_join_requests': pending_join_requests,
+    })
 
 
 # This is the dashboard for managers. I wanted only users with role "manager" to access this.
@@ -63,7 +72,15 @@ def dashboard_view(request):
 def manager_dashboard_view(request):
     if request.user.role != 'manager':
         return redirect('dashboard')
-    return render(request, 'accounts/manager_dashboard.html')
+
+    pending_join_requests = DeliJoinRequest.objects.filter(
+        invited_user=request.user,
+        status=DeliJoinRequest.STATUS_PENDING,
+    ).select_related('deli', 'invited_by')
+
+    return render(request, 'accounts/manager_dashboard.html', {
+        'pending_join_requests': pending_join_requests,
+    })
 
 
 # I made this view to handle logging users out of the system.
@@ -118,16 +135,123 @@ def is_manager(user):
 # This view allows a manager to see and manage all users. I used @user_passes_test with my is_manager helper so only managers can access it.
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_users_view(request):
-    users = User.objects.all().order_by('email')
-    return render(request, 'accounts/manage_users.html', {'users': users})
+    manager_delis = request.user.delis.all()
+    users = User.objects.filter(
+        Q(delis__in=manager_delis) | Q(id=request.user.id)
+    ).distinct().order_by('email')
+
+    invite_form = InviteUserToDeliForm(manager=request.user)
+    sent_join_requests = DeliJoinRequest.objects.filter(
+        invited_by=request.user,
+        status=DeliJoinRequest.STATUS_PENDING,
+    ).select_related('invited_user', 'deli')
+
+    return render(request, 'accounts/manage_users.html', {
+        'users': users,
+        'invite_form': invite_form,
+        'sent_join_requests': sent_join_requests,
+    })
+
+
+@user_passes_test(is_manager, login_url='dashboard')
+def invite_user_to_deli_view(request):
+    if request.method != "POST":
+        return redirect('manage_users')
+
+    manager_delis = request.user.delis.all()
+    if not manager_delis.exists():
+        messages.error(
+            request,
+            "You need to create a deli first, or be assigned by another deli owner before sending invites."
+        )
+        return redirect('manage_delis')
+
+    form = InviteUserToDeliForm(request.POST, manager=request.user)
+    if not form.is_valid():
+        for field_errors in form.errors.values():
+            for err in field_errors:
+                messages.error(request, err)
+        return redirect('manage_users')
+
+    email = form.cleaned_data['email']
+    deli = form.cleaned_data['deli']
+
+    if not manager_delis.filter(pk=deli.pk).exists():
+        messages.error(request, "You can only invite users to delis assigned to you.")
+        return redirect('manage_users')
+
+    invited_user = User.objects.filter(email=email).first()
+    if not invited_user:
+        messages.error(request, "No user with that email exists yet. Ask them to create an account first.")
+        return redirect('manage_users')
+
+    if invited_user.delis.filter(pk=deli.pk).exists():
+        messages.info(request, f"{invited_user.email} is already assigned to {deli.deli_name}.")
+        return redirect('manage_users')
+
+    if DeliJoinRequest.objects.filter(
+        deli=deli,
+        invited_user=invited_user,
+        status=DeliJoinRequest.STATUS_PENDING,
+    ).exists():
+        messages.info(request, f"A pending join request already exists for {invited_user.email}.")
+        return redirect('manage_users')
+
+    DeliJoinRequest.objects.create(
+        deli=deli,
+        invited_user=invited_user,
+        invited_by=request.user,
+    )
+    messages.success(request, f"Join request sent to {invited_user.email} for {deli.deli_name}.")
+    return redirect('manage_users')
+
+
+@login_required(login_url='login')
+def respond_deli_join_request(request, request_id, action):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    join_request = get_object_or_404(
+        DeliJoinRequest,
+        id=request_id,
+        invited_user=request.user,
+        status=DeliJoinRequest.STATUS_PENDING,
+    )
+
+    if action == "accept":
+        request.user.delis.add(join_request.deli)
+        join_request.status = DeliJoinRequest.STATUS_ACCEPTED
+        join_request.responded_at = now()
+        join_request.save(update_fields=['status', 'responded_at'])
+        messages.success(request, f"You joined {join_request.deli.deli_name}.")
+    elif action == "reject":
+        join_request.status = DeliJoinRequest.STATUS_REJECTED
+        join_request.responded_at = now()
+        join_request.save(update_fields=['status', 'responded_at'])
+        messages.info(request, f"You rejected the invitation to {join_request.deli.deli_name}.")
+    else:
+        messages.error(request, "Invalid join request action.")
+
+    if request.user.role == 'manager':
+        return redirect('manager_dashboard')
+    return redirect('dashboard')
 
 
 # This view lets managers delete users. I again protect it with @user_passes_test so only managers can trigger deletions.
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_user_view(request, user_id):
     try:
-        # I fetch the user by their ID; if they don't exist, this will raise DoesNotExist
-        user = User.objects.get(id=user_id)
+        manager_delis = request.user.delis.all()
+
+        # Managers may only target users assigned to at least one of their delis.
+        user = User.objects.filter(
+            id=user_id,
+            delis__in=manager_delis,
+        ).distinct().first()
+
+        if not user:
+            messages.error(request, "You can only delete users assigned to your delis.")
+            return redirect('manage_users')
 
         # I don't want managers deleting other managers, so I block that case
         if user.role == 'manager':
@@ -146,7 +270,7 @@ def delete_user_view(request, user_id):
 # This view lets managers see and manage all delis in the system.
 @user_passes_test(is_manager, login_url='dashboard')
 def manage_delis_view(request):
-    delis = Deli.objects.all().order_by('deli_name')
+    delis = request.user.delis.all().order_by('deli_name')
     return render(request, 'accounts/manage_delis.html', {'delis': delis})
 
 
@@ -155,8 +279,10 @@ def manage_delis_view(request):
 @user_passes_test(is_manager, login_url='dashboard')
 def deli_form_view(request, deli_id=None):
     # If deli_id is provided I'm editing an existing deli. Otherwise I'm creating a brand new deli
+    manager_delis = request.user.delis.all()
+
     if deli_id:
-        deli = Deli.objects.get(pk=deli_id)
+        deli = get_object_or_404(manager_delis, pk=deli_id)
         form = DeliForm(instance=deli)
         title = "Edit Deli"
     else:
@@ -168,10 +294,12 @@ def deli_form_view(request, deli_id=None):
     if request.method == "POST":
         form = DeliForm(request.POST, instance=deli)
         if form.is_valid():
-            form.save()
+            saved_deli = form.save()
             if deli_id:
                 messages.success(request, "Deli updated successfully.")
             else:
+                # Auto-assign newly created deli to the manager who created it.
+                request.user.delis.add(saved_deli)
                 messages.success(request, "New deli created successfully.")
             return redirect('manage_delis')
 
@@ -183,11 +311,11 @@ def deli_form_view(request, deli_id=None):
 @user_passes_test(is_manager, login_url='dashboard')
 def delete_deli_view(request, deli_id):
     try:
-        deli = Deli.objects.get(pk=deli_id)
+        deli = Deli.objects.get(pk=deli_id, users=request.user)
         deli.delete()
         messages.success(request, "Deli deleted successfully.")
     except Deli.DoesNotExist:
-        messages.error(request, "Deli not found.")
+        messages.error(request, "Deli not found or not assigned to you.")
     return redirect('manage_delis')
 
 
@@ -195,16 +323,61 @@ def delete_deli_view(request, deli_id):
 # I bind the form to the POST data and tie it to the user instance. Saving the form updates the user's deli assignments
 @user_passes_test(is_manager, login_url='dashboard')
 def assign_delis_view(request, user_id):
-    user = User.objects.get(id=user_id)
+    manager_delis = request.user.delis.all()
+
+    # Graceful handling: managers with no deli assignments cannot assign delis yet.
+    if not manager_delis.exists():
+        messages.error(
+            request,
+            "You need to create a deli to assign yourself to, or be assigned by another deli owner."
+        )
+        return redirect('manage_delis')
+
+    # Managers may only assign delis for users already linked to one of their delis.
+    user = User.objects.filter(
+        id=user_id,
+        delis__in=manager_delis,
+    ).distinct().first()
+
+    if not user:
+        messages.error(request, "You can only assign delis for users in your deli network.")
+        return redirect('manage_users')
+
     if request.method == "POST":
-        form = AssignDeliForm(request.POST, instance=user)
+        form = AssignDeliForm(request.POST, instance=user, allowed_delis=manager_delis)
         if form.is_valid():
+            # Safety rule: a manager cannot remove themselves from a deli
+            # if they are the only manager assigned to that deli.
+            if user.id == request.user.id and user.role == "manager":
+                current_delis = set(user.delis.all())
+                selected_delis = set(form.cleaned_data.get("delis", []))
+                removed_delis = current_delis - selected_delis
+
+                blocked_delis = []
+                for deli in removed_delis:
+                    other_manager_exists = User.objects.filter(
+                        role="manager",
+                        delis=deli,
+                    ).exclude(id=request.user.id).exists()
+
+                    if not other_manager_exists:
+                        blocked_delis.append(deli.deli_name)
+
+                if blocked_delis:
+                    messages.error(
+                        request,
+                        "You cannot unassign yourself from deli(s) where you are the only manager: "
+                        + ", ".join(sorted(blocked_delis))
+                        + ". Add another manager first, or delete the deli."
+                    )
+                    return redirect('assign_delis', user_id=user.id)
+
             form.save()
             messages.success(request, f"{user.email} deli assignments updated successfully.")
             return redirect('manage_users')
     else:
         # For GET I just show the form with current assignments pre-filled
-        form = AssignDeliForm(instance=user)
+        form = AssignDeliForm(instance=user, allowed_delis=manager_delis)
 
     # I show the template that lets me assign delis to the user
     return render(request, 'accounts/assign_delis.html', {'form': form, 'user': user})

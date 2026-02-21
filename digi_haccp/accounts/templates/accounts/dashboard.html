@@ -126,6 +126,14 @@
        This card contains welcome text, assigned delis and action buttons. -->
   <div class="dashboard-container">
 
+    {% if messages %}
+      <div class="mb-4 space-y-2 text-left">
+        {% for message in messages %}
+          <div class="alert alert-info">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- (Welcome Heading)
          I greet the staff user using their email. Reference: https://symbl.cc/en/search/?q=wave -->
     <h2>Welcome, {{ request.user.email }} 👋</h2>
@@ -146,6 +154,32 @@
       <h3>Assigned Deli Location(s)</h3>
       <p>{{ request.user.delis.all|join:", " |default:"No deli assigned" }}</p>
     </div>
+
+    {% if pending_join_requests %}
+    <div class="deli-info" style="text-align:left;">
+      <h3>Join Deli Requests</h3>
+      <div class="space-y-3">
+        {% for req in pending_join_requests %}
+          <div class="p-3 rounded-lg bg-white border border-gray-200 flex flex-wrap justify-between items-center gap-2">
+            <div>
+              <div class="font-semibold">{{ req.deli.deli_name }}</div>
+              <div class="text-sm text-gray-600">Invited by {{ req.invited_by.email }}</div>
+            </div>
+            <div class="flex gap-2">
+              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'accept' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+              </form>
+              <form method="POST" action="{% url 'respond_deli_join_request' req.id 'reject' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline btn-error btn-sm">Reject</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- (Quick Instructions)
          A little helper sentence to guide staff on what to do next. -->

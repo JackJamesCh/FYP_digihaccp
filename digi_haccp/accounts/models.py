@@ -60,6 +60,42 @@ class User(AbstractBaseUser):
         return self.email  # Displays the email when referring to a user object
 
 
+# (Deli Join Request)
+# I use this model for manager-driven invitations by email.
+# A manager can invite a user to join one of the delis they manage,
+# and the user can accept or reject from their dashboard.
+class DeliJoinRequest(models.Model):
+    STATUS_PENDING = 'pending'
+    STATUS_ACCEPTED = 'accepted'
+    STATUS_REJECTED = 'rejected'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_ACCEPTED, 'Accepted'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+
+    deli = models.ForeignKey(Deli, on_delete=models.CASCADE, related_name='join_requests')
+    invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='deli_join_requests')
+    invited_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_deli_join_requests')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['deli', 'invited_user'],
+                condition=models.Q(status='pending'),
+                name='unique_pending_deli_join_request',
+            )
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.invited_user.email} -> {self.deli.deli_name} ({self.status})"
+
+
 
 #  EXTENSIBLE CHECKLIST SYSTEM
 

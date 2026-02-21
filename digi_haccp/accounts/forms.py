@@ -2,6 +2,35 @@ from django import forms
 from .models import Deli, User, ChecklistTemplate, Checklist, ChecklistItem
 from django.forms import inlineformset_factory
 
+
+# (Invite User To Deli Form)
+# Managers use this to invite an existing user by email to one of their delis.
+class InviteUserToDeliForm(forms.Form):
+    email = forms.EmailField(
+        label="User email",
+        widget=forms.EmailInput(attrs={
+            "class": "input input-bordered w-full",
+            "placeholder": "user@example.com",
+        })
+    )
+    deli = forms.ModelChoiceField(
+        queryset=Deli.objects.none(),
+        label="Deli",
+        empty_label="Select deli",
+        widget=forms.Select(attrs={"class": "select select-bordered w-full"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        manager = kwargs.pop("manager", None)
+        super().__init__(*args, **kwargs)
+
+        # SECURITY: only allow delis assigned to the current manager.
+        if manager is not None and getattr(manager, "role", None) == "manager":
+            self.fields["deli"].queryset = manager.delis.all().order_by("deli_name")
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
 # (Deli Form)
 # I made this form so managers can easily create or edit deli information.
 # Using a ModelForm saves me time since Django automatically builds the fields for me.
@@ -22,7 +51,7 @@ class DeliForm(forms.ModelForm):
 # I used a ModelMultipleChoiceField so they can select several delis at once.
 class AssignDeliForm(forms.ModelForm):
     delis = forms.ModelMultipleChoiceField(
-        queryset=Deli.objects.all(),  # Shows all delis for selection
+        queryset=Deli.objects.none(),  # queryset is injected per-request in __init__
         widget=forms.CheckboxSelectMultiple,  # I chose checkboxes because it's simpler for multiple choices
         required=False,
         label="Assign to Delis",
@@ -31,6 +60,15 @@ class AssignDeliForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['delis']  # Only editing the delis connected to the user
+
+    def __init__(self, *args, **kwargs):
+        allowed_delis = kwargs.pop("allowed_delis", None)
+        super().__init__(*args, **kwargs)
+
+        if allowed_delis is not None:
+            self.fields["delis"].queryset = allowed_delis.order_by("deli_name")
+        else:
+            self.fields["delis"].queryset = Deli.objects.all().order_by("deli_name")
 
 
 # (Checklist Form)
